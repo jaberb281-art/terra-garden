@@ -96,7 +96,20 @@ async function layouts(browser, locale) {
     await page.goto(base + '/' + locale + '/contact');
     assert.equal(await page.locator('.contact-whatsapp').evaluate(el => el.nextElementSibling.className), 'quote-panel');
     await page.locator('button[type=submit]').click();
-    assert.equal(await page.locator('.field-error').count(), 7);
+    assert.equal(await page.locator('.field-error').count(), 3);
+    assert.equal(await page.locator('#quote-location').evaluate(el => el === document.activeElement), true);
+    const posts = [];
+    page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()); });
+    await page.locator('#quote-location').fill(locale === 'ar' ? 'الدوحة' : 'Doha');
+    await page.locator('#quote-message').fill(locale === 'ar' ? 'ترتيب أحواض الحديقة' : 'Tidy the garden beds');
+    await page.locator('#quote-consent').check();
+    await page.locator('#quote-phone').fill('123');
+    await page.locator('button[type=submit]').click();
+    assert(await page.locator('#error-phone').isVisible());
+    await page.locator('#quote-phone').clear();
+    await page.locator('button[type=submit]').click();
+    assert(await page.locator('.form-result').isVisible());
+    assert.deepEqual(posts, []);
     assert.equal(await page.locator('.whatsapp-fab').isDisabled(), !configured);
     console.log(locale + ' layout, RTL/LTR widget placement and quote form passed.');
   } finally {

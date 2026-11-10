@@ -89,10 +89,11 @@ export function Gallery({project,locale}: {project:Project;locale:Locale}) {
 }
 
 const fields = {
-  name:['Name','الاسم'], phone:['Phone','رقم الهاتف'], property:['Property type','نوع العقار'], service:['Service','الخدمة'], location:['Location in Qatar','الموقع في قطر'], size:['Property size (optional)','مساحة العقار (اختياري)'], date:['Preferred date (optional)','التاريخ المفضل (اختياري)'], message:['Tell us about the work','أخبرنا عن العمل المطلوب'],
+  name:['Name (optional)','الاسم (اختياري)'], phone:['Phone (optional)','رقم الهاتف (اختياري)'], property:['Property type (optional)','نوع العقار (اختياري)'], service:['Service (optional)','الخدمة (اختياري)'], location:['Location in Qatar','الموقع في قطر'], size:['Property size (optional)','مساحة العقار (اختياري)'], date:['Preferred date (optional)','التاريخ المفضل (اختياري)'], message:['Describe the work','صف العمل المطلوب'],
 } as const;
 type Field = keyof typeof fields;
 type Errors = Partial<Record<Field|'consent',string>>;
+const requiredFields: readonly Field[] = ['location', 'message'];
 const subscribeToHydration = () => () => {};
 export function QuoteForm({locale}: {locale: Locale}) {
   const [errors,setErrors] = useState<Errors>({});
@@ -107,7 +108,7 @@ export function QuoteForm({locale}: {locale: Locale}) {
     const values=new FormData(form);
     const value=(field:Field)=>String(values.get(field)??'').trim();
     const next:Errors={};
-    for(const key of ['name','phone','property','service','location','message'] as const) if(!value(key)) next[key]=required;
+    for(const key of requiredFields) if(!value(key)) next[key]=required;
     const digits=value('phone').replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632)).replace(/[۰-۹]/g,c=>String(c.charCodeAt(0)-1776));
     if(digits && (!/^\+?[\d\s().-]+$/.test(digits) || !/^\d{8,15}$/.test(digits.replace(/\D/g,'')))) next.phone=ar?'أدخل رقم هاتف صالحاً من ٨ إلى ١٥ رقماً.':'Enter a valid phone number with 8 to 15 digits.';
     if(!values.has('consent')) next.consent=ar?'يرجى تأكيد فهمك لطبيعة النموذج التجريبي.':'Please acknowledge that this is a demo.';
@@ -116,7 +117,7 @@ export function QuoteForm({locale}: {locale: Locale}) {
     setValid(!first);
     if(first) (form.elements.namedItem(first) as HTMLElement|null)?.focus();
   };
-  const attributes=(field:Field)=>({id:'quote-'+field,name:field,required:field!=='size'&&field!=='date','aria-invalid':!!errors[field],'aria-describedby':errors[field]?'error-'+field:undefined});
+  const attributes=(field:Field)=>({id:'quote-'+field,name:field,required:requiredFields.includes(field),'aria-invalid':!!errors[field],'aria-describedby':errors[field]?'error-'+field:undefined});
   const error=(field:Field|'consent')=>errors[field]&&<span className="field-error" id={'error-'+field} role="alert">{errors[field]}</span>;
   return <form className="quote-form" method="post" noValidate onSubmit={submit} onChange={()=>{if(valid)setValid(false);}}>
     <fieldset disabled={!hydrated}><div className="form-grid">

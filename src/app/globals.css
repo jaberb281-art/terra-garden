@@ -380,7 +380,7 @@ main:focus { outline: none; }
   font-size: .75rem;
 }
 
-.intro, .supplies, .faq, .related-projects { background: var(--cream); }
+.intro, .supplies, .faq { background: var(--cream); }
 .intro { position: relative; isolation: isolate; }
 .intro::before {
   content: '';
@@ -412,6 +412,57 @@ main:focus { outline: none; }
   border-radius: clamp(18px, 2vw, 28px);
 }
 .intro-grid .text-link, .split .text-link { margin-block-start: 11px; }
+.approach-steps, .project-facts { display: grid; gap: 12px; }
+.approach-steps dt, .project-facts dt { color: var(--forest); font-weight: 740; }
+.approach-steps dd, .project-facts dd { margin-inline-start: 0; color: var(--muted); }
+.service-choices {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-block-start: clamp(18px, 3vw, 32px);
+  padding: clamp(12px, 2vw, 20px);
+  border-radius: var(--radius);
+  background: var(--cream);
+}
+.service-choices p { color: var(--forest); font-weight: 740; }
+.service-choices ul, .concept-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.service-choices .button { min-height: var(--target); }
+.service-choices .button svg { flex: none; }
+.service-overview > .service-choices { margin-block-start: 0; }
+.service-group {
+  margin-block-start: clamp(28px, 5vw, 60px);
+  scroll-margin-block-start: 20px;
+}
+.service-group .lead { margin-block: 12px 20px; }
+.service-group .service-photo { aspect-ratio: 1.8; }
+.service-guidance p + p { margin-block-start: 10px; color: var(--muted); }
+.scope-heading { margin-block-end: 12px; }
+.service-examples { margin-block-start: clamp(18px, 3vw, 34px); }
+.project-facts { margin-block-start: 14px; }
+.audience-concept { display: inline-block; margin-block-start: 5px; color: var(--forest); font-size: .82rem; font-weight: 700; }
+.get-started { padding-block: clamp(36px, 5vw, 65px); }
+.get-started .lead { margin-block-start: 10px; }
+.get-started-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 28px);
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.get-started-steps li { padding-block-start: 12px; border-block-start: 1px solid var(--line); }
+.get-started-steps svg { color: var(--forest); }
+.get-started-steps h3 { margin-block-start: 7px; }
+.get-started-steps p { margin-block-start: 4px; color: var(--muted); }
+.quote-panel .quote-demo { margin-block: 12px; }
 .section-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-block-end: clamp(24px, 3.4vw, 42px); }
 .section-head .lead, .split .lead, .detail-grid .lead, .project-overview .lead { margin-block-start: 14px; }
 .text-link {
@@ -431,7 +482,7 @@ main:focus { outline: none; }
 .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .services-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .services-grid:has(> :last-child:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.services-grid:has(> :last-child:nth-child(2)), .related-projects .three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.services-grid:has(> :last-child:nth-child(2)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .service-card > a, .project-card > a { display: block; height: 100%; border-radius: var(--radius); }
 .service-photo, .audience-photo, .card-photo, .split-image, .page-intro-image {
   position: relative;
@@ -808,6 +859,7 @@ dialog img { width: auto; max-height: 75dvh; object-fit: contain; border-radius:
 }
 @media (max-width: 540px) {
   .home-services .grid.services-grid { grid-template-columns: minmax(0, 1fr); }
+  .service-overview .grid.services-grid, .get-started-steps { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
   .contact-whatsapp { flex-direction: column; align-items: start; }
@@ -840,7 +892,7 @@ dialog img { width: auto; max-height: 75dvh; object-fit: contain; border-radius:
   .showcase-meta { min-height: 80px; gap: 8px; }
   .showcase-link { font-size: .8rem; }
   .showcase-link svg { width: 13px; }
-  .three, .related-projects .three, .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .three, .form-grid { grid-template-columns: minmax(0, 1fr); }
   .service-card h3 { font-size: 1.02rem; }
   .service-card p { font-size: .85rem; }
   .audience-card, .audience-card:first-child { gap: 12px; }
