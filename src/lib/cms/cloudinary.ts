@@ -7,6 +7,27 @@ import { managedImageId, imageWidths, type ImageRecord, type ImageRole } from '.
 
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
+function transform(width: number) {
+  return { crop: 'limit', width, quality: 'auto' } as const;
+}
+
+function deliveryUrl(publicId: string, version: number, width: number) {
+  return cloudinary.url(publicId, {
+    resource_type: 'image', type: 'authenticated', sign_url: true, secure: true,
+    format: 'webp', version, transformation: [transform(width)],
+  });
+}
+
+function unsignedPath(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com' || url.search || url.hash) return '';
+    return url.pathname.replace(/\/s--[\w-]+--(?=\/)/, '');
+  } catch {
+    return '';
+  }
+}
+
 export function imageFormat(buffer: Buffer): ImageRecord['format'] | null {
   if (buffer.length < 12) return null;
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'jpg';
@@ -24,6 +45,9 @@ export async function uploadProjectImage(buffer: Buffer, project: string, role: 
     const stream = cloudinary.uploader.upload_stream({
       public_id: publicId, resource_type: 'image', type: 'authenticated',
       allowed_formats: [format], overwrite: false, use_filename: false,
+      // Authenticated delivery only serves variants generated ahead of time.
+      eager: imageWidths.map(width => ({ ...transform(width), format: 'webp' })),
+      eager_async: false,
       signature_algorithm: 'sha256', timeout: 25000,
     }, (error, response) => {
       if (error || !response) reject(new Error('Cloudinary upload failed'));
@@ -32,12 +56,18 @@ export async function uploadProjectImage(buffer: Buffer, project: string, role: 
     stream.on('error', reject);
     stream.end(buffer);
   });
+  const variants = Array.isArray(data.eager)
+    ? new Set(data.eager.map(entry => typeof entry.secure_url === 'string' ? unsignedPath(entry.secure_url) : ''))
+    : new Set<string>();
+  const complete = Number.isInteger(data.version) && imageWidths.every(width =>
+    variants.has(unsignedPath(deliveryUrl(publicId, data.version, width))),
+  );
   if (data.public_id !== publicId || data.resource_type !== 'image' || data.type !== 'authenticated' ||
     !/^[a-f0-9]{32}$/.test(data.asset_id) || data.format !== format ||
     !Number.isInteger(data.width) || !Number.isInteger(data.height) || !Number.isInteger(data.version) ||
     data.width < 320 || data.height < 240 || data.width > 6000 || data.height > 6000 ||
     data.width * data.height > 24000000 || data.bytes < 1 || data.bytes > MAX_IMAGE_BYTES ||
-    (typeof data.pages === 'number' && data.pages > 1)) {
+    (typeof data.pages === 'number' && data.pages > 1) || !complete) {
     // An exact match to the generated, non-overwriting ID is safe to discard.
     if (data.public_id === publicId && data.type === 'authenticated' && data.resource_type === 'image') {
       await cloudinary.uploader.destroy(publicId, { type: 'authenticated', resource_type: 'image', invalidate: true }).catch(() => undefined);
@@ -68,14 +98,11 @@ export async function discardOwnedImage(image: Pick<ImageRecord, 'project_id' | 
 export async function imageResponse(image: ImageRecord | null, request: Request) {
   const config = cloudinaryConfig();
   if (!config || !image || !managedImageId(image)) return new Response(null, { status: 404 });
-  const requested = Number(new URL(request.url).searchParams.get('w') ?? 828);
+  const requested = Number(new URL(request.url).searchParams.get('w') ?? 640);
   const width = imageWidths.find(value => value === requested);
   if (!width) return new Response(null, { status: 400 });
   cloudinary.config(config);
-  const url = cloudinary.url(image.public_id, {
-    resource_type: 'image', type: 'authenticated', sign_url: true, secure: true,
-    format: 'webp', version: image.version, transformation: [{ crop: 'limit', width, quality: 'auto' }],
-  });
+  const url = deliveryUrl(image.public_id, image.version, width);
   try {
     const upstream = await fetch(url, { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(10000) });
     if (!upstream.ok || !upstream.body || !upstream.headers.get('content-type')?.startsWith('image/webp')) {

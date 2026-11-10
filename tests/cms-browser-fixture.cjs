@@ -245,6 +245,9 @@ async function run() {
     await page.waitForURL('**/edit?notice=media');
     assert.equal(images[2].sort_order, 5);
     await page.locator('[name=description_en]').fill('Updated fixture project description');
+    await page.getByText('Search metadata (optional)', { exact: true }).click();
+    await page.locator('[name=seo_title_en]').fill('Fixture search title');
+    await page.locator('[name=seo_title_ar]').fill('عنوان اختبار للبحث');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.waitForURL('**/edit?notice=saved');
     assert.equal(project.description.en, 'Updated fixture project description');
@@ -255,6 +258,7 @@ async function run() {
     await page.getByRole('link', { name: 'Preview Arabic' }).click();
     await page.waitForURL('**/preview?lang=ar');
     assert.equal(await page.locator('.admin-preview').getAttribute('dir'), 'rtl');
+    await page.screenshot({ path: output + '/fixture-preview-arabic.png', fullPage: true });
     await page.getByRole('slider').focus();
     await page.keyboard.press('End');
     assert.equal(await page.getByRole('slider').inputValue(), '100');
@@ -265,6 +269,7 @@ async function run() {
     for (const [locale, title] of [['en', 'Garden fixture'], ['ar', 'حديقة اختبارية']]) {
       await page.goto(base + '/' + locale + '/projects/fixture-garden');
       assert.equal(await page.locator('h1').textContent(), title);
+      assert.equal(await page.title(), (locale === 'ar' ? 'عنوان اختبار للبحث' : 'Fixture search title') + ' | TERRA');
       assert.equal(await page.locator('.gallery>button').count(), 4);
       assert.match(await page.locator('meta[name=robots]').getAttribute('content'), /noindex/);
       await page.goto(base + '/' + locale + '/projects');
@@ -296,6 +301,10 @@ async function run() {
     await page.getByRole('button', { name: 'Delete permanently' }).click();
     await page.waitForURL('**/admin/projects?notice=deleted');
     assert.equal(projects.length, 0);
+    await page.goto(base + '/admin/settings');
+    await page.getByRole('heading', { name: 'Settings' }).waitFor();
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({ path: output + '/fixture-settings-mobile.png', fullPage: true });
     await page.getByRole('button', { name: 'Sign out' }).click();
     await page.waitForURL('**/admin/login');
     assert.deepEqual(pageErrors, []);

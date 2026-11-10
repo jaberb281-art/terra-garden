@@ -10,6 +10,20 @@ function reply(status: number, message: string) {
   return Response.json({ message }, { status, headers: { 'Cache-Control': 'private, no-store' } });
 }
 
+function isSameOrigin(request: Request) {
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+  try {
+    const source = new URL(origin);
+    // Next may normalize its internal request URL to localhost. Compare the
+    // browser origin against the HTTP Host retained by the reverse proxy.
+    return source.origin === origin && source.host === request.headers.get('host') &&
+      source.protocol === new URL(request.url).protocol;
+  } catch {
+    return false;
+  }
+}
+
 async function boundedForm(request: Request) {
   const reader = request.body?.getReader();
   if (!reader) return null;
@@ -32,7 +46,7 @@ async function boundedForm(request: Request) {
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (request.headers.get('origin') !== new URL(request.url).origin) return reply(403, 'Use the upload form in TERRA Admin.');
+  if (!isSameOrigin(request)) return reply(403, 'Use the upload form in TERRA Admin.');
   const admin = await adminIdentity();
   if (!admin) return reply(401, 'Sign in with an authorized admin account.');
   if (!cloudinaryConfig()) return reply(503, 'Configure Cloudinary before uploading photographs.');

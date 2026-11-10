@@ -341,6 +341,7 @@ export function ServiceDetail({ locale, item, serviceItems = services, projectIt
   const art = serviceArt[services.findIndex(service => service.slug === item.slug)];
   const image = item.art ?? { src: photo(art.image), alt: art.alt };
   const guidance = serviceGuidance[item.slug];
+  const faqs = item.faqs ?? [item.faq, guidance.faq];
   const examples = projectItems.filter(project => project.services.some(slug => slug === item.slug)).slice(0, 3);
   return (
     <>
@@ -367,7 +368,7 @@ export function ServiceDetail({ locale, item, serviceItems = services, projectIt
         </div>
       </section>
       <section className="section faq">
-        <div className="shell detail-grid">
+        <div className={faqs.length ? 'shell detail-grid' : 'shell'}>
           <div>
             <h2>{journey.prepare[locale]}</h2>
             <div className="service-guidance">
@@ -376,12 +377,12 @@ export function ServiceDetail({ locale, item, serviceItems = services, projectIt
               <p>{journey.next[locale]}</p>
             </div>
           </div>
-          <div>
+          {faqs.length > 0 && <div>
             <h3>{c.faq[locale]}</h3>
-            {(item.faqs?.length ? item.faqs : [item.faq, guidance.faq]).map(([question, answer]) => (
+            {faqs.map(([question, answer]) => (
               <details key={question.en}><summary>{question[locale]}</summary><p>{answer[locale]}</p></details>
             ))}
-          </div>
+          </div>}
         </div>
       </section>
       <section className="section">

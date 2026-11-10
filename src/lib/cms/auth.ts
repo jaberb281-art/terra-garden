@@ -1,20 +1,22 @@
 import 'server-only';
 
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { supabaseConfig } from './env';
 
 export async function sessionClient() {
   const config = supabaseConfig();
   if (!config) return null;
-  const jar = await cookies();
+  const [jar, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const secure = requestHeaders.get('x-forwarded-proto') === 'https';
   return createServerClient(config.url, config.key, {
+    cookieOptions: { httpOnly: true, sameSite: 'lax', secure },
     cookies: {
       getAll: () => jar.getAll(),
       setAll: entries => {
         try {
-          for (const { name, value, options } of entries) jar.set(name, value, { ...options, httpOnly: true });
+          for (const { name, value, options } of entries) jar.set(name, value, { ...options, httpOnly: true, secure });
         } catch {
           // Server Components cannot write cookies. The admin proxy refreshes them.
         }

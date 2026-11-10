@@ -65,7 +65,7 @@ export const CMS_TAG = 'terra-published-content';
 export const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const reservedProjectSlugs = ['villa-garden-makeover', 'outdoor-living-renewal', 'farm-landscape-care'] as const;
-export const imageWidths = [160, 256, 384, 640, 828, 1080, 1200, 1600, 1920] as const;
+export const imageWidths = [256, 640, 1080, 1600] as const;
 
 export function managedImageId(image: Pick<ImageRecord, 'project_id' | 'role' | 'public_id'>) {
   const prefix = 'terra/projects/' + image.project_id + '/' + image.role + '/';

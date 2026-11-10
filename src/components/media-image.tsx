@@ -4,7 +4,7 @@ import Image, { type ImageLoaderProps, type ImageProps } from 'next/image';
 import { imageWidths } from '@/lib/cms/records';
 
 function cmsLoader({ src, width }: ImageLoaderProps) {
-  const size = imageWidths.find(candidate => candidate >= width) ?? 1920;
+  const size = imageWidths.find(candidate => candidate >= width) ?? imageWidths[imageWidths.length - 1];
   return src + '?w=' + size;
 }
 

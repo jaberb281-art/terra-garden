@@ -6,14 +6,16 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const config = supabaseConfig();
   if (config) {
+    const secure = request.nextUrl.protocol === 'https:';
     const supabase = createServerClient(config.url, config.key, {
+      cookieOptions: { httpOnly: true, sameSite: 'lax', secure },
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (entries, headers) => {
           for (const { name, value } of entries) request.cookies.set(name, value);
           response = NextResponse.next({ request });
           for (const { name, value, options } of entries) {
-            response.cookies.set(name, value, { ...options, httpOnly: true });
+            response.cookies.set(name, value, { ...options, httpOnly: true, secure });
           }
           for (const [name, value] of Object.entries(headers ?? {})) response.headers.set(name, value);
         },
