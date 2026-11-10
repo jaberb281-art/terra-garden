@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, Menu, X, ZoomIn } from 'lucide-react';
-import { categories, navigation, photo, ui, type Locale } from '@/content/site';
-import { services, type Project } from '@/content/catalog';
+import { categories, navigation, ui, type Locale } from '@/content/site';
+import { services, type Project, type SiteService } from '@/content/catalog';
+import { projectPhoto } from '@/content/project-media';
+import { MediaImage } from './media-image';
 
 export function MobileNav({ locale, path }: { locale: Locale; path: string }) {
   const ref = useRef<HTMLDetailsElement>(null);
@@ -57,15 +58,18 @@ export function MobileNav({ locale, path }: { locale: Locale; path: string }) {
 export function ProjectGrid({items, locale, filter=false}: {items: readonly Project[]; locale: Locale; filter?: boolean}) {
   const [category,setCategory] = useState('all');
   const shown = items.filter(p => category==='all' || p.category===category);
+  const hasReal = items.some(project => !project.sample);
+  const all = hasReal ? (locale === 'ar' ? 'كل المشاريع والتصورات' : 'All work and concepts') : ui.all[locale];
   return <>
     {filter && <div className="filters">
-      {[{id:'all',name:ui.all},...categories].map(c => <button key={c.id} type="button" aria-pressed={category===c.id} onClick={()=>setCategory(c.id)}>{c.name[locale]}</button>)}
+      <button type="button" aria-pressed={category==='all'} onClick={()=>setCategory('all')}>{all}</button>
+      {categories.map(c => <button key={c.id} type="button" aria-pressed={category===c.id} onClick={()=>setCategory(c.id)}>{c.name[locale]}</button>)}
     </div>}
-    {filter && <span className="sr-only" role="status">{locale==='ar' ? 'عدد التصورات: ' : 'Concepts shown: '}{shown.length}</span>}
+    {filter && <span className="sr-only" role="status">{locale==='ar' ? 'عدد النتائج: ' : 'Results shown: '}{shown.length}</span>}
     {shown.length ? <div className="grid three">
       {shown.map(p => <article className="project-card" key={p.slug}>
         <Link href={'/'+locale+'/projects/'+p.slug}>
-          <div className="card-photo"><Image src={photo(p.image+'-after')} alt={p.afterAlt[locale]} fill sizes="(max-width: 620px) 94vw, (max-width: 950px) 46vw, 390px"/>{p.sample && <span className="photo-tag">{ui.sample[locale]}</span>}</div>
+          <div className="card-photo"><MediaImage src={projectPhoto(p, 'after').src} alt={p.afterAlt[locale]} fill sizes="(max-width: 620px) 94vw, (max-width: 950px) 46vw, 390px"/>{p.sample && <span className="photo-tag">{ui.sample[locale]}</span>}</div>
           <div className="project-body"><div><p className="eyebrow">{categories.find(c=>c.id===p.category)?.name[locale]}</p><h3>{p.title[locale]}</h3><p>{p.summary[locale]}</p></div><ArrowUpRight size={21} aria-hidden="true"/></div>
         </Link>
       </article>)}
@@ -78,12 +82,18 @@ export function Gallery({project,locale}: {project:Project;locale:Locale}) {
   const trigger = useRef<HTMLButtonElement>(null);
   const [active, setActive] = useState(0);
   const id = useId();
-  const images = [{name:ui.before[locale],src:photo(project.image+'-before'),alt:project.beforeAlt[locale]},{name:ui.after[locale],src:photo(project.image+'-after'),alt:project.afterAlt[locale]}];
+  const images = [
+    { ...projectPhoto(project, 'before'), name: ui.before[locale] },
+    { ...projectPhoto(project, 'after'), name: ui.after[locale] },
+    ...(project.media?.gallery ?? []).map(image => ({ ...image, name: image.caption?.[locale] || image.alt[locale] })),
+  ];
+  const selected = images[active] ?? images[0];
   return <div className="gallery">
-    {images.map((im,i) => <button key={im.src} type="button" aria-label={ui.openPhoto[locale]+': '+im.name} onClick={e => {trigger.current=e.currentTarget;setActive(i);dialog.current?.showModal();}}><div className="card-photo"><Image src={im.src} alt={im.alt} fill sizes="(max-width: 620px) 43vw, 330px"/><ZoomIn aria-hidden="true" className="zoom-icon"/></div><span>{im.name}</span></button>)}
+    {images.map((im,i) => <button key={im.src} type="button" aria-label={ui.openPhoto[locale]+': '+im.name} onClick={e => {trigger.current=e.currentTarget;setActive(i);dialog.current?.showModal();}}><div className="card-photo"><MediaImage src={im.src} alt={im.alt[locale]} fill sizes="(max-width: 620px) 43vw, 330px"/><ZoomIn aria-hidden="true" className="zoom-icon"/></div><span>{im.name}</span></button>)}
     <dialog ref={dialog} aria-labelledby={id} onClose={()=>trigger.current?.focus()}>
-      <div className="dialog-head"><h3 id={id}>{images[active].name}{project.sample ? ' · '+ui.sample[locale] : ''}</h3><button type="button" aria-label={ui.close[locale]} onClick={()=>dialog.current?.close()}><X aria-hidden="true"/></button></div>
-      <Image src={images[active].src} alt={images[active].alt} width={508} height={508}/>
+      <div className="dialog-head"><h3 id={id}>{selected.name}{project.sample ? ' · '+ui.sample[locale] : ''}</h3><button type="button" aria-label={ui.close[locale]} onClick={()=>dialog.current?.close()}><X aria-hidden="true"/></button></div>
+      <MediaImage src={selected.src} alt={selected.alt[locale]} width={selected.width} height={selected.height} sizes="(max-width: 620px) 90vw, 530px" />
+      {selected.caption?.[locale] && selected.caption[locale] !== selected.name && <p>{selected.caption[locale]}</p>}
     </dialog>
   </div>;
 }
@@ -95,7 +105,7 @@ type Field = keyof typeof fields;
 type Errors = Partial<Record<Field|'consent',string>>;
 const requiredFields: readonly Field[] = ['location', 'message'];
 const subscribeToHydration = () => () => {};
-export function QuoteForm({locale}: {locale: Locale}) {
+export function QuoteForm({locale, serviceItems = services}: {locale: Locale; serviceItems?: readonly SiteService[]}) {
   const [errors,setErrors] = useState<Errors>({});
   const [valid,setValid] = useState(false);
   const hydrated=useSyncExternalStore(subscribeToHydration,()=>true,()=>false);
@@ -124,7 +134,7 @@ export function QuoteForm({locale}: {locale: Locale}) {
       <label htmlFor="quote-name">{label('name')}<input {...attributes('name')} autoComplete="name" maxLength={120}/>{error('name')}</label>
       <label htmlFor="quote-phone">{label('phone')}<input {...attributes('phone')} type="tel" autoComplete="tel" maxLength={28} dir="ltr"/>{error('phone')}</label>
       <label htmlFor="quote-property">{label('property')}<select {...attributes('property')} defaultValue=""><option value="">{ar?'اختر نوع العقار':'Select property type'}</option>{categories.map(c=><option key={c.id} value={c.id}>{c.title[locale]}</option>)}<option value="other">{ar?'أخرى':'Other'}</option></select>{error('property')}</label>
-      <label htmlFor="quote-service">{label('service')}<select {...attributes('service')} defaultValue=""><option value="">{ar?'اختر الخدمة':'Select a service'}</option>{services.map(s=><option key={s.slug} value={s.slug}>{s.title[locale]}</option>)}<option value="other">{ar?'استفسار عام أو عن المستلزمات':'General or supplies inquiry'}</option></select>{error('service')}</label>
+      <label htmlFor="quote-service">{label('service')}<select {...attributes('service')} defaultValue=""><option value="">{ar?'اختر الخدمة':'Select a service'}</option>{serviceItems.map(s=><option key={s.slug} value={s.slug}>{s.title[locale]}</option>)}<option value="other">{ar?'استفسار عام أو عن المستلزمات':'General or supplies inquiry'}</option></select>{error('service')}</label>
       <label htmlFor="quote-location">{label('location')}<input {...attributes('location')} maxLength={120} placeholder={ar?'مثال: الدوحة، الوعب':'e.g. Doha, Al Waab'}/>{error('location')}</label>
       <label htmlFor="quote-size">{label('size')}<input {...attributes('size')} maxLength={60} placeholder={ar?'مثال: ١٢٠ م²':'e.g. 120 m²'}/></label>
       <label htmlFor="quote-date">{label('date')}<input {...attributes('date')} type="date" lang={locale}/></label>

@@ -1,0 +1,29 @@
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+import { supabaseConfig } from '@/lib/cms/env';
+
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({ request });
+  const config = supabaseConfig();
+  if (config) {
+    const supabase = createServerClient(config.url, config.key, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (entries, headers) => {
+          for (const { name, value } of entries) request.cookies.set(name, value);
+          response = NextResponse.next({ request });
+          for (const { name, value, options } of entries) {
+            response.cookies.set(name, value, { ...options, httpOnly: true });
+          }
+          for (const [name, value] of Object.entries(headers ?? {})) response.headers.set(name, value);
+        },
+      },
+    });
+    await supabase.auth.getClaims();
+  }
+  response.headers.set('Cache-Control', 'private, no-store');
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
+}
+
+export const config = { matcher: ['/admin/:path*'] };

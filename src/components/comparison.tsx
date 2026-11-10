@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { categories, photo, ui, type Locale } from '@/content/site';
+import { categories, ui, type Locale } from '@/content/site';
 import type { Project } from '@/content/catalog';
+import { projectPhoto } from '@/content/project-media';
+import { MediaImage } from './media-image';
 
 const motionQuery = '(prefers-reduced-motion: reduce)';
 const ROTATION_MS = 3000;
@@ -22,12 +23,14 @@ export function Comparison({
 }: { project: Project; locale: Locale; compact?: boolean; eager?: boolean }) {
   const frame = useRef<HTMLDivElement>(null);
   const id = useId();
+  const before = projectPhoto(project, 'before');
+  const after = projectPhoto(project, 'after');
 
   return (
     <figure className="comparison">
       <div ref={frame} className="compare-frame" dir="ltr">
-        <Image src={photo(project.image + '-after')} alt={project.afterAlt[locale]} fill sizes={comparisonSizes} loading={eager ? 'eager' : undefined} />
-        <Image className="before-image" src={photo(project.image + '-before')} alt={project.beforeAlt[locale]} fill sizes={comparisonSizes} loading={eager ? 'eager' : undefined} />
+        <MediaImage src={after.src} alt={after.alt[locale]} fill sizes={comparisonSizes} loading={eager ? 'eager' : undefined} />
+        <MediaImage className="before-image" src={before.src} alt={before.alt[locale]} fill sizes={comparisonSizes} loading={eager ? 'eager' : undefined} />
         <span className="compare-label before" aria-hidden="true">{ui.before[locale]}</span>
         <span className="compare-label after" aria-hidden="true">{ui.after[locale]}</span>
         <input

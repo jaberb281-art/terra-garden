@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Check, CircleArrowRight, ClipboardCheck, Droplet, Droplets, Flower2, Leaf, ListChecks, MapPin, Scissors, Sprout } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { brand, categories, copy, navigation, photo, ui, type Locale } from '@/content/site';
-import { products, projects, services, type Service, type Project, type ServiceSlug } from '@/content/catalog';
+import { products, projects, services, type Service, type Project, type SiteService } from '@/content/catalog';
 import { journey, serviceGuidance, servicePaths } from '@/content/journey';
 import { Gallery, MobileNav, ProjectGrid, QuoteForm } from './controls';
 import { Comparison, Featured } from './comparison';
@@ -105,11 +105,12 @@ function ServiceGrid({ locale, items = services, editorial = false }: {
       {items.map(service => {
         const art = serviceArt[services.findIndex(entry => entry.slug === service.slug)];
         const ServiceIcon = art.icon;
+        const image = service.art ?? { src: photo(art.image), alt: art.alt };
         return (
           <article className="service-card" key={service.slug}>
             <Link href={local(locale, '/services/' + service.slug)}>
               <div className="service-photo">
-                <Image src={photo(art.image)} alt={art.alt[locale]} fill sizes={items.length === 2
+                <Image src={image.src} alt={image.alt[locale]} fill sizes={items.length === 2
                   ? '(max-width: 540px) 90vw, (max-width: 1380px) 44vw, 610px'
                   : '(max-width: 540px) 90vw, (max-width: 940px) 44vw, 310px'} />
                 <span className="photo-tag">{ui.sample[locale]}</span>
@@ -187,15 +188,18 @@ function Supplies({locale}: {locale:Locale}) {
   const h=copy.home;
   return <section className="section supplies"><div className="shell split"><div className="split-image"><Image src={photo('nursery')} alt={h.suppliesAlt[locale]} fill sizes="(max-width: 760px) 94vw, 570px"/><span className="photo-tag">{ui.sample[locale]}</span></div><div><p className="eyebrow">{copy.products.tag[locale]}</p><h2>{h.supplies[locale]}</h2><p className="lead">{h.suppliesCopy[locale]}</p><ul className="supply-categories">{products.map(item => <li key={item.title.en}>{item.title[locale]}</li>)}</ul><TextLink href={local(locale,'/products')}>{h.allProducts[locale]}</TextLink></div></div></section>;
 }
-function Transformations({ locale }: { locale: Locale }) {
+function Transformations({ locale, items }: { locale: Locale; items: readonly Project[] }) {
   const h = copy.home;
+  const hasWork = items.some(item => !item.sample);
   return (
     <section className="section transformations" aria-labelledby="transformation-heading">
       <div className="shell transformation-shell">
         <p className="eyebrow">{locale === 'ar' ? 'قبل وبعد' : 'Before & after'}</p>
         <h2 id="transformation-heading">{h.transformations[locale]}</h2>
-        <p className="lead">{h.transformationCopy[locale]}</p>
-        <Featured items={projects} locale={locale} />
+        <p className="lead">{hasWork
+          ? (locale === 'ar' ? 'قارن بين صور قبل وبعد للمشاريع والتصورات التوضيحية.' : 'Compare before and after images from completed work and illustrative concepts.')
+          : h.transformationCopy[locale]}</p>
+        <Featured items={items} locale={locale} />
       </div>
     </section>
   );
@@ -226,8 +230,12 @@ function GetStarted({ locale }: { locale: Locale }) {
   );
 }
 
-export function Home({locale}: {locale:Locale}) {
+export function Home({locale, projectItems = projects, serviceItems = services}: {
+  locale: Locale; projectItems?: readonly Project[]; serviceItems?: readonly SiteService[];
+}) {
   const h=copy.home;
+  const featured = projectItems.slice(0, 3);
+  const hasWork = featured.some(item => !item.sample);
   const pauseSlides = locale === 'ar' ? 'إيقاف عرض الصور مؤقتاً' : 'Pause image slideshow';
   return <>
     <section className="hero">
@@ -285,18 +293,18 @@ export function Home({locale}: {locale:Locale}) {
         <SectionHead tag={copy.services.tag[locale]} title={<>{h.services[locale]} <span>{h.servicesAccent[locale]}</span></>}>
           <TextLink href={local(locale, '/services')}>{h.allServices[locale]}</TextLink>
         </SectionHead>
-        <ServiceGrid locale={locale} editorial />
+        <ServiceGrid locale={locale} items={serviceItems} editorial />
         <ServiceChoices locale={locale} />
       </div>
     </section>
-    <Transformations locale={locale} />
+    <Transformations locale={locale} items={featured} />
     <Audience locale={locale}/>
     <section className="section projects-section">
       <div className="shell">
-        <SectionHead tag={copy.projects.tag[locale]} title={h.gallery[locale]} description={h.galleryCopy[locale]}>
-          <TextLink href={local(locale, '/projects')}>{h.allProjects[locale]}</TextLink>
+        <SectionHead tag={hasWork ? (locale === 'ar' ? 'المشاريع والتصورات' : 'Work and concepts') : copy.projects.tag[locale]} title={h.gallery[locale]} description={hasWork ? undefined : h.galleryCopy[locale]}>
+          <TextLink href={local(locale, '/projects')}>{(hasWork ? h.viewProjects : h.allProjects)[locale]}</TextLink>
         </SectionHead>
-        <ProjectGrid items={projects} locale={locale} />
+        <ProjectGrid items={featured} locale={locale} />
       </div>
     </section>
     <Supplies locale={locale} />
@@ -304,7 +312,7 @@ export function Home({locale}: {locale:Locale}) {
     <CTA locale={locale}/>
   </>;
 }
-export function Services({ locale }: { locale: Locale }) {
+export function Services({ locale, items = services }: { locale: Locale; items?: readonly SiteService[] }) {
   const c = copy.services;
   return (
     <>
@@ -316,7 +324,7 @@ export function Services({ locale }: { locale: Locale }) {
             <section key={path.id} id={path.id} className="service-group" tabIndex={-1}>
               <h2>{path.title[locale]}</h2>
               <p className="lead">{path.description[locale]}</p>
-              <ServiceGrid locale={locale} items={services.filter(service => path.services.some(slug => slug === service.slug))} />
+              <ServiceGrid locale={locale} items={items.filter(service => path.services.some(slug => slug === service.slug))} />
             </section>
           ))}
         </div>
@@ -326,14 +334,17 @@ export function Services({ locale }: { locale: Locale }) {
     </>
   );
 }
-export function ServiceDetail({ locale, item }: { locale: Locale; item: Service & { slug: ServiceSlug } }) {
+export function ServiceDetail({ locale, item, serviceItems = services, projectItems = projects }: {
+  locale: Locale; item: SiteService; serviceItems?: readonly SiteService[]; projectItems?: readonly Project[];
+}) {
   const c = copy.services;
   const art = serviceArt[services.findIndex(service => service.slug === item.slug)];
+  const image = item.art ?? { src: photo(art.image), alt: art.alt };
   const guidance = serviceGuidance[item.slug];
-  const examples = projects.filter(project => project.services.some(slug => slug === item.slug));
+  const examples = projectItems.filter(project => project.services.some(slug => slug === item.slug)).slice(0, 3);
   return (
     <>
-      <PageIntro tag={c.tag[locale]} title={item.title[locale]} description={item.summary[locale]} image={{ src: photo(art.image), alt: art.alt[locale], label: ui.sample[locale] }}>
+      <PageIntro tag={c.tag[locale]} title={item.title[locale]} description={item.summary[locale]} image={{ src: image.src, alt: image.alt[locale], label: ui.sample[locale] }}>
         <TextLink href={local(locale, '/services')}>{copy.home.allServices[locale]}</TextLink>
       </PageIntro>
       <section className="section">
@@ -351,7 +362,7 @@ export function ServiceDetail({ locale, item }: { locale: Locale; item: Service 
           </div>
         </div>
         <div className="shell service-examples">
-          <h3>{locale === 'ar' ? 'تصورات توضيحية ذات صلة' : 'Related garden concepts'}</h3>
+          <h3>{locale === 'ar' ? 'أمثلة ذات صلة' : 'Related examples'}</h3>
           <ConceptLinks locale={locale} items={examples} />
         </div>
       </section>
@@ -367,7 +378,7 @@ export function ServiceDetail({ locale, item }: { locale: Locale; item: Service 
           </div>
           <div>
             <h3>{c.faq[locale]}</h3>
-            {[item.faq, guidance.faq].map(([question, answer]) => (
+            {(item.faqs?.length ? item.faqs : [item.faq, guidance.faq]).map(([question, answer]) => (
               <details key={question.en}><summary>{question[locale]}</summary><p>{answer[locale]}</p></details>
             ))}
           </div>
@@ -376,7 +387,7 @@ export function ServiceDetail({ locale, item }: { locale: Locale; item: Service 
       <section className="section">
         <div className="shell">
           <SectionHead tag={c.tag[locale]} title={c.related[locale]} />
-          <ServiceGrid items={services.filter(service => service.slug !== item.slug)} locale={locale} />
+          <ServiceGrid items={serviceItems.filter(service => service.slug !== item.slug)} locale={locale} />
         </div>
       </section>
       <CTA locale={locale} inquiry={{ kind: 'service', name: item.title[locale] }} />
@@ -395,11 +406,16 @@ function ConceptLinks({ locale, items }: { locale: Locale; items: readonly Proje
     </ul>
   );
 }
-export function Projects({locale}: {locale:Locale}) {
+export function Projects({locale, items = projects}: {locale:Locale; items?: readonly Project[]}) {
   const c=copy.projects;
-  return <><PageIntro tag={c.tag[locale]} title={c.title[locale]} description={c.description[locale]}/><section className="section"><div className="shell"><h2 className="sr-only">{c.tag[locale]}</h2><p className="demo-note">{c.disclaimer[locale]}</p><ProjectGrid items={projects} locale={locale} filter/></div></section><CTA locale={locale}/></>;
+  const hasWork = items.some(item => !item.sample);
+  const tag = hasWork ? (locale === 'ar' ? 'معرض المشاريع' : 'Project gallery') : c.tag[locale];
+  const description = hasWork ? (locale === 'ar' ? 'تصفّح أعمال تيرا والتصورات التوضيحية للحدائق.' : 'Browse completed TERRA work and illustrative garden concepts.') : c.description[locale];
+  return <><PageIntro tag={tag} title={c.title[locale]} description={description}/><section className="section"><div className="shell"><h2 className="sr-only">{tag}</h2><p className="demo-note">{hasWork ? (locale === 'ar' ? 'الصور التي تحمل علامة «صور توضيحية» تعرض تصاميم تخيلية.' : 'Items labeled “Sample imagery” depict illustrative designs.') : c.disclaimer[locale]}</p><ProjectGrid items={items} locale={locale} filter/></div></section><CTA locale={locale}/></>;
 }
-export function ProjectDetail({ locale, item }: { locale: Locale; item: Project }) {
+export function ProjectDetail({ locale, item, serviceItems = services, projectItems = projects }: {
+  locale: Locale; item: Project; serviceItems?: readonly SiteService[]; projectItems?: readonly Project[];
+}) {
   const c = copy.projects;
   const category = categories.find(entry => entry.id === item.category);
   const storyLabels = {
@@ -410,7 +426,7 @@ export function ProjectDetail({ locale, item }: { locale: Locale; item: Project 
   return (
     <>
       <PageIntro className="project-intro" tag={category?.title[locale] ?? c.tag[locale]} title={item.title[locale]} description={item.summary[locale]}>
-        <TextLink href={local(locale, '/projects')}>{copy.home.allProjects[locale]}</TextLink>
+        <TextLink href={local(locale, '/projects')}>{(item.sample ? copy.home.allProjects : copy.home.viewProjects)[locale]}</TextLink>
       </PageIntro>
       <section className="section project-section">
         <div className="shell project-detail">
@@ -419,6 +435,7 @@ export function ProjectDetail({ locale, item }: { locale: Locale; item: Project 
           <div className="project-story">
             <div className="project-overview">
               <h2>{(item.sample ? c.overview : journey.caseStudy)[locale]}</h2>
+              {item.location?.[locale] && <p>{item.location[locale]}</p>}
               <dl className="project-facts">
                 {(['challenge', 'approach', 'outcome'] as const).map(part => (
                   <div key={part}>
@@ -438,10 +455,10 @@ export function ProjectDetail({ locale, item }: { locale: Locale; item: Project 
       <section className="section services-section">
         <div className="shell">
           <SectionHead tag={copy.services.tag[locale]} title={copy.services.related[locale]} />
-          <ServiceGrid locale={locale} items={services.filter(service => item.services.includes(service.slug))} />
+          <ServiceGrid locale={locale} items={serviceItems.filter(service => item.services.includes(service.slug))} />
           <div className="service-examples">
             <h3>{journey.moreConcepts[locale]}</h3>
-            <ConceptLinks items={projects.filter(project => project.slug !== item.slug)} locale={locale} />
+            <ConceptLinks items={projectItems.filter(project => project.slug !== item.slug).slice(0, 3)} locale={locale} />
           </div>
         </div>
       </section>
@@ -493,7 +510,7 @@ export function About({locale}: {locale:Locale}) {
   const c=copy.about;
   return <><PageIntro tag={c.tag[locale]} title={c.title[locale]} description={c.description[locale]}/><section className="section"><div className="shell split about-layout"><div className="split-image"><Image src={photo('hero')} alt={copy.home.heroAlt[locale]} fill sizes="(max-width: 760px) 94vw, 570px"/><span className="photo-tag">{ui.sample[locale]}</span></div><div><h2>{c.approach[locale]}</h2><p className="lead">{c.body[locale]}</p><div className="product-list">{c.steps.map(([title,body])=><article key={title.en}><div><h3>{title[locale]}</h3><p>{body[locale]}</p></div></article>)}</div></div></div></section><CTA locale={locale}/></>;
 }
-export function Contact({ locale }: { locale: Locale }) {
+export function Contact({ locale, serviceItems = services }: { locale: Locale; serviceItems?: readonly SiteService[] }) {
   const c = copy.contact;
   const href = inquiryLink(locale);
   return (
@@ -515,7 +532,7 @@ export function Contact({ locale }: { locale: Locale }) {
             <h2>{whatsappCopy.form[locale]}</h2>
             <p className="demo-note quote-demo">{journey.formStatus[locale]}</p>
             <p className="lead">{journey.formGuide[locale]}</p>
-            <QuoteForm locale={locale} />
+            <QuoteForm locale={locale} serviceItems={serviceItems} />
           </div>
         </div>
       </section>

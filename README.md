@@ -4,7 +4,7 @@ A frontend-only Next.js App Router site for a Qatar landscaping brand concept. E
 
 ## Run locally
 
-Requires Node.js 20.9+ (developed with Node 24). Use the checked-in npm lockfile.
+Requires Node.js 22+ (developed with Node 24). Use the checked-in npm lockfile.
 
 ```sh
 npm ci
@@ -46,6 +46,8 @@ The CMS integration seam is the content record layer: a future server-side adapt
 The source checks are in `tests/`. Run the SEO check with `node tests/seo.cjs`. To run the browser checks, install the optional tooling with `npm install --prefix .qa --no-save playwright-core axe-core` and start the production build on port 3100 with `npm run start -- --port 3100`. With Google Chrome installed, run `node tests/hero-refinement-check.cjs` and `node tests/whatsapp-check.cjs` against a build with WhatsApp unset. The browser checks write screenshots to the ignored `test-results/` directory.
 
 ## Contact and launch settings
+
+For CMS setup, owner provisioning, migration safety, and test coverage, see [TERRA CMS](docs/cms.md).
 
 Copy `.env.example` to `.env.local` only when needed. Set `TERRA_WHATSAPP_NUMBER` to the verified TERRA WhatsApp number with country code and digits only, then rebuild the site. When configured, the public number is shown on Contact and in the footer. WhatsApp opens with a localized draft based on the page or product category. The visitor edits and sends it in WhatsApp. A missing or invalid number disables the actions and skips the floating reminder. The quotation form checks entries in the browser. It never sends or stores them. The catalogue has no inventory, pricing, checkout or payments.
 

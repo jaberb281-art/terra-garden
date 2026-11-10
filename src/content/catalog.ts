@@ -7,6 +7,9 @@ export interface Service {
   detail: Localized;
   scope: readonly Localized[];
   faq: readonly [Localized, Localized];
+  faqs?: readonly (readonly [Localized, Localized])[];
+  art?: { src: string; alt: Localized };
+  seo?: { title: Localized; description: Localized };
 }
 export const services = [
   {
@@ -40,6 +43,8 @@ export const services = [
 ] as const satisfies readonly Service[];
 
 export type ServiceSlug = typeof services[number]['slug'];
+export type SiteService = Service & { slug: ServiceSlug };
+export type ProjectPhoto = { src: string; alt: Localized; width: number; height: number; caption?: Localized };
 export interface Project {
   slug: string;
   category: 'villas' | 'commercial' | 'farms';
@@ -51,6 +56,9 @@ export interface Project {
   afterAlt: Localized;
   services: readonly ServiceSlug[];
   sample: boolean;
+  location?: Localized;
+  seo?: { title: Localized; description: Localized };
+  media?: { before: ProjectPhoto; after: ProjectPhoto; gallery: ProjectPhoto[] };
 }
 export const projects: readonly Project[] = [
   { slug: 'villa-garden-makeover', category: 'villas', title: pair('Villa garden makeover', 'تجديد حديقة فيلا'),

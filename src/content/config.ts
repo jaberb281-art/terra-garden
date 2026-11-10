@@ -23,7 +23,8 @@ export function languageUrls(path: string) {
 export function metadata(locale:Locale,path:string,title:Localized,description:Localized,image='hero',alt?:Localized): Metadata {
   const fullTitle=title[locale]+' | '+brand.name;
   const url=origin ? origin+'/'+locale+path : undefined;
-  const images=origin ? [{url:origin+photo(image), alt:alt?.[locale]??title[locale]}] : undefined;
+  const imagePath = image.startsWith('/') ? image : photo(image);
+  const images=origin ? [{url:origin+imagePath, alt:alt?.[locale]??title[locale]}] : undefined;
   return {
     title:fullTitle, description:description[locale],
     robots:{index:indexable,follow:indexable},
