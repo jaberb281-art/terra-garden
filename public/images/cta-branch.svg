@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 245" fill="none">
+  <defs>
+    <g id="leaf" stroke="#748359" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0C32-26 64-25 111 0C68 27 31 22 0 0Z" stroke-width="1.25"/>
+      <path d="M0 0C39-4 77 1 111 0M13-1Q24-11 41-17M24-1Q36-14 55-17M36-1Q50-14 66-15M49-1Q64-12 79-12M63 0Q76-8 90-8M76 0Q87-5 99-5M14-1Q25 9 42 14M26-1Q38 11 55 16M39-1Q53 12 69 14M52-1Q67 10 82 10M67 0Q79 7 92 7M80 0Q90 4 101 4" stroke-width=".55"/>
+    </g>
+  </defs>
+  <path d="M347-8C309 19 278 64 238 87S151 119 119 129" stroke="#748359" stroke-width="3" stroke-linecap="round"/>
+  <path d="M244 83q-25-3-48-16m36 23q-23 23-36 45m94-96q-9 31-7 54" stroke="#748359" stroke-width="1.35"/>
+  <use href="#leaf" transform="translate(196 67) rotate(195) scale(1.2 1.02)"/>
+  <use href="#leaf" transform="translate(135 125) rotate(150) scale(1.16 1.02)"/>
+  <use href="#leaf" transform="translate(196 135) rotate(123) scale(1 .93)"/>
+  <use href="#leaf" transform="translate(283 88) rotate(100) scale(1 .9)"/>
+</svg>
