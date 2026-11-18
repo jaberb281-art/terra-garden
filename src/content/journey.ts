@@ -7,7 +7,7 @@ export const servicePaths = [
     choice: pair('Care for my garden', 'العناية بحديقتي'),
     title: pair('Garden care & upkeep', 'العناية بالحدائق وصيانتها'),
     description: pair('Regular maintenance, lawns, date palms and tree care, and clean-ups for gardens that need attention.', 'صيانة دورية وعناية بالعشب والنخيل والأشجار وأعمال تنظيف للحدائق التي تحتاج إلى عناية.'),
-    services: ['garden-maintenance', 'grass-plantation', 'date-palm-tree-care', 'garden-cleaning'],
+    services: ['garden-maintenance', 'grass-cutting', 'grass-plantation', 'date-palm-tree-care', 'garden-cleaning'],
   },
   {
     id: 'improve',
@@ -59,6 +59,11 @@ export const serviceGuidance = {
     suitable: pair('For lawns and plants that need better soil, organic manure or a regular nutrition routine.', 'للعشب والنباتات التي تحتاج إلى تربة أفضل أو سماد عضوي أو برنامج تغذية منتظم.'),
     prepare: pair('Note what is growing, where, and any problems you have noticed such as weak growth or poor soil. Photos help.', 'اذكر ما هو مزروع ومكانه وأي مشكلات لاحظتها مثل ضعف النمو أو سوء التربة. وتفيد الصور.'),
     faq: [pair('Do you supply the soil and fertilizer?', 'هل توفّرون التربة والسماد؟'), pair('Our service includes soil improvement, organic manure, German potting soil and NPK fertilizer application.', 'تشمل خدمتنا تحسين التربة والسماد العضوي وتربة الزراعة الألمانية وإضافة سماد NPK.')],
+  },
+  'grass-cutting': {
+    suitable: pair('For villas, compounds and businesses with an existing lawn that needs regular mowing and tidy edges.', 'للفلل والمجمعات والمنشآت التي لديها مسطح عشبي قائم ويحتاج إلى قص منتظم وحواف مرتبة.'),
+    prepare: pair('Note the approximate lawn area, the type of grass if you know it, and how often you would like it cut. Photos help.', 'اذكر مساحة العشب التقريبية ونوعه إن كنت تعرفه، وعدد مرات القص التي تفضّلها. وتفيد الصور.'),
+    faq: [pair('Does grass cutting include the planted beds?', 'هل يشمل قص العشب العناية بالأحواض المزروعة؟'), pair('Grass cutting focuses on the turf and its edges. If beds or shrubs also need attention, look at garden maintenance.', 'يركّز قص العشب على المسطح العشبي وحوافه. وإذا كانت الأحواض أو الشجيرات تحتاج إلى عناية أيضاً، فاطّلع على خدمة صيانة الحدائق.')],
   },
   'garden-cleaning': {
     suitable: pair('For overgrown or neglected gardens, new properties, or seasonal preparation before planting.', 'للحدائق المهملة أو المتروكة، أو العقارات الجديدة، أو التجهيز الموسمي قبل الزراعة.'),
