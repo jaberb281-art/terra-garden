@@ -1,27 +1,30 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, Check, ClipboardCheck, ListChecks, Mail, MapPin, Phone, Sprout } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, ClipboardCheck, ListChecks, Mail, MapPin, MessageCircle, Phone, Sprout } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
-import { brand, categories, copy, navigation, photo, ui, type Locale } from '@/content/site';
+import { audienceMobile, brand, categories, copy, navigation, photo, ui, type Locale } from '@/content/site';
 import { projects, services, type Project, type SiteService } from '@/content/catalog';
 import { areas, areasCopy, business } from '@/content/business';
 import { faqCopy, faqs } from '@/content/faq';
 import { journey, serviceGuidance, servicePaths } from '@/content/journey';
 import { Gallery, MobileNav, ProjectGrid, QuoteForm } from './controls';
-import { heroServices, serviceDisplay, serviceGroup, serviceUi, showServicePhotos, isFeatured } from '@/content/service-display';
+import { serviceDisplay, serviceGroup, serviceUi, showServicePhotos, isFeatured } from '@/content/service-display';
 import { Comparison, Featured } from './comparison';
 import { LanguageSelect } from './language-select';
 import { inquiryLink, whatsappCopy, whatsappNumber, type Inquiry } from '@/content/whatsapp';
 import { WhatsAppAction } from './whatsapp-action';
 import { Proof, TrustStrip } from './proof';
+import { ServicesOverview } from './services-overview';
+import { ProjectsOverview } from './projects-overview';
+import { SocialPlaceholders } from './social-placeholders';
 
 const local = (locale: Locale, path = '') => '/'+locale+path;
 // Repeat the first photo at the end so the track can loop without a jump.
 export function Brand({locale}: {locale: Locale}) {
   return <Link className="brand" href={local(locale)}><span className="brand-icon"><Sprout size={25} strokeWidth={1.45} aria-hidden="true"/></span><span><strong>{brand.name}</strong><small>{brand.subtitle[locale]}</small></span></Link>;
 }
-export function Header({locale,path,missing,whatsappHref}: {locale: Locale; path: string; missing?:boolean; whatsappHref?:string}) {
-  return <header className="site-header">
+export function Header({locale,path,missing,whatsappHref,overlay}: {locale: Locale; path: string; missing?:boolean; whatsappHref?:string; overlay?:boolean}) {
+  return <header className="site-header" data-overlay={overlay ? '' : undefined}>
     <div className="shell header-row">
       <Brand locale={locale}/>
       <nav className="desktop-nav" aria-label={ui.mainNav[locale]}>{navigation.map(n=><Link key={n.path} href={local(locale,n.path)} aria-current={!missing && path===n.path?'page':undefined} data-active={n.path!=='' && path.startsWith(n.path+'/') ? true : undefined}>{n.label[locale]}</Link>)}</nav>
@@ -31,29 +34,25 @@ export function Header({locale,path,missing,whatsappHref}: {locale: Locale; path
 }
 export function Footer({ locale, whatsappHref }: { locale: Locale; whatsappHref?: string }) {
   return (
-    <footer>
+    <footer className="site-footer">
       <div className="shell footer-grid">
-        <div><Brand locale={locale} /><p>{ui.tagline[locale]}</p></div>
-        <div>
+        <div className="footer-brand"><Brand locale={locale} /><p><span className="footer-tagline-desktop">{ui.tagline[locale]}</span><span className="footer-tagline-mobile">{locale === 'ar' ? 'تنسيق الحدائق والعناية بها في أنحاء قطر.' : 'Garden care & landscaping across Qatar.'}</span></p><SocialPlaceholders locale={locale} /></div>
+        <div className="footer-links">
           <h2>{ui.discover[locale]}</h2>
           <nav aria-label={ui.discover[locale]}>
-            {navigation.filter(entry => entry.path && entry.path !== '/projects').map(entry => (
+            {navigation.filter(entry => entry.path).map(entry => (
               <Link key={entry.path} href={local(locale, entry.path)}>{entry.label[locale]}</Link>
             ))}
           </nav>
         </div>
         <div className="footer-contact">
           <h2>{ui.getInTouch[locale]}</h2>
-          <p>{whatsappCopy.footer[locale]}</p>
+          <p>{locale === 'ar' ? 'معاينة وعرض سعر مجانيان لحديقتك.' : 'Free garden inspection & quotation.'}</p>
           <WhatsAppAction locale={locale} href={whatsappHref} label={whatsappCopy.chat[locale]} className="button whatsapp-accent" />
-          {whatsappHref && <bdi className="whatsapp-number" dir="ltr">+{whatsappNumber}</bdi>}
           <ContactLines locale={locale} />
-          <Link className="footer-projects" href={local(locale, '/projects')}>
-            {copy.home.allProjects[locale]} <ArrowRight className="direction" size={15} aria-hidden="true" />
-          </Link>
         </div>
       </div>
-      <div className="shell footer-end"><span>© {brand.name} · {brand.subtitle[locale]}</span><span>{ui.place[locale]}</span></div>
+      <div className="shell footer-end"><span>© {brand.name}</span><span>{locale === 'ar' ? 'الدوحة، قطر' : 'Doha, Qatar'}</span></div>
     </footer>
   );
 }
@@ -146,7 +145,7 @@ function ServiceShowcase({ locale, items }: { locale: Locale; items: readonly Si
   const ordered = [...items].sort((a, b) => serviceDisplay[a.slug].order - serviceDisplay[b.slug].order);
   return (
     <div className="svc-showcase">
-      <div className="svc-tabs" role="radiogroup" aria-label={serviceUi.filter[locale]}>
+      <div className="svc-tabs mobile-fit-bar" role="radiogroup" aria-label={serviceUi.filter[locale]}>
         <input className="sr-only" type="radio" name="svc-group" id="svc-all" defaultChecked />
         <label htmlFor="svc-all">{serviceUi.all[locale]}</label>
         {servicePaths.map(path => (
@@ -160,28 +159,11 @@ function ServiceShowcase({ locale, items }: { locale: Locale; items: readonly Si
     </div>
   );
 }
-function ServiceChoices({ locale, onOverview = false }: { locale: Locale; onOverview?: boolean }) {
-  return (
-    <nav className="service-choices" aria-label={journey.choose[locale]}>
-      <p>{journey.choose[locale]}</p>
-      <ul>
-        {servicePaths.map(path => (
-          <li key={path.id}>
-            <Link className="button ghost" href={(onOverview ? '' : local(locale, '/services')) + '#' + path.id}>
-              {path.choice[locale]} <ArrowRight className="direction" size={15} aria-hidden="true" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-}
-
 function Audience({ locale }: { locale: Locale }) {
   return (
     <section className="section audience" id="audiences">
       <div className="shell">
-        <SectionHead tag={locale === 'ar' ? 'لمن نقدم خدماتنا' : 'Who we care for'} title={copy.home.audience[locale]} />
+        <SectionHead tag={locale === 'ar' ? 'لمن نقدم خدماتنا' : 'Who we care for'} title={<><span className="audience-desktop">{copy.home.audience[locale]}</span><span className="audience-mobile">{audienceMobile.title[locale]}</span></>} />
         <div className="audience-grid">
           {categories.map(category => {
             const project = projects.find(item => item.category === category.id);
@@ -189,14 +171,14 @@ function Audience({ locale }: { locale: Locale }) {
             return (
               <Link href={local(locale, href)} key={category.id} className="audience-card">
                 <div className="audience-photo">
-                  <Image src={photo(category.image)} alt={category.alt[locale]} fill sizes="(max-width: 620px) 94vw, (max-width: 950px) 46vw, 380px" />
+                  <Image src={photo(category.image)} alt={category.alt[locale]} fill sizes="(max-width: 760px) calc(100vw - 40px), (max-width: 950px) 46vw, 55vw" />
                   <span className="photo-tag">{ui.sample[locale]}</span>
                 </div>
                 <div className="audience-copy">
                   <h3>{category.title[locale]}</h3>
-                  <p>{category.copy[locale]}</p>
-                  <span className="audience-concept">{(project ? journey.concept : copy.home.allProjects)[locale]}</span>
-                  <ArrowUpRight size={18} aria-hidden="true" />
+                  <p className="audience-desktop">{category.copy[locale]}</p>
+                  <p className="audience-mobile">{audienceMobile[category.id][locale]}</p>
+                  <span className="audience-concept">{(project ? journey.concept : copy.home.allProjects)[locale]}<ArrowUpRight size={18} aria-hidden="true" /></span>
                 </div>
               </Link>
             );
@@ -295,50 +277,34 @@ export function Home({locale, projectItems = projects, serviceItems = services}:
   const featured = projectItems.slice(0, 3);
   const hasWork = featured.some(item => !item.sample);
   return <>
-    <section className="hero">
+    <section className="hero" aria-labelledby="home-hero-title">
+      <figure className="hero-photo">
+        <Image
+          src={photo('hero')}
+          alt={h.heroAlt[locale]}
+          fill
+          sizes="100vw"
+          preload
+        />
+      </figure>
+      <div className="hero-shade" aria-hidden="true" />
       <div className="shell hero-inner">
         <div className="hero-content">
-          <h1>{h.hero1[locale]}</h1>
-          <p className="hero-copy">{h.heroCopy[locale]}</p>
+          <p className="hero-trust">{h.heroTrust[locale]}</p>
+          <h1 id="home-hero-title">{h.hero1[locale]}</h1>
+          <p className="hero-note">{h.heroCopy[locale]}</p>
           <div className="actions">
-            <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={whatsappCopy.hero[locale]} className="button primary" />
-            <Link className="button ghost" href={local(locale, '/projects')}>{h.viewProjects[locale]}</Link>
+            <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={h.heroInquire[locale]} className="button hero-inquiry" />
+            <Link className="button hero-more" href={local(locale, '/services')}>{h.heroLearn[locale]}<ArrowRight className="direction" size={17} aria-hidden="true" /></Link>
           </div>
         </div>
-        <div className="hero-stage">
-          <figure className="hero-photo">
-            <Image
-              src={photo('hero')}
-              alt={h.heroAlt[locale]}
-              fill
-              sizes="(max-width: 820px) 91vw, (max-width: 1400px) 47vw, 660px"
-              preload
-            />
-            <figcaption className="photo-tag">{ui.sample[locale]}</figcaption>
-          </figure>
-          {inquiryLink(locale) && (
-            <div className="hero-panel">
-              <h2>{serviceUi.needTitle[locale]}</h2>
-              <p>{serviceUi.needNote[locale]}</p>
-              <div className="hero-choices">
-                {heroServices.map(slug => {
-                  const item = serviceItems.find(entry => entry.slug === slug);
-                  if (!item) return null;
-                  return (
-                    <WhatsAppAction
-                      key={slug}
-                      locale={locale}
-                      href={inquiryLink(locale, { kind: 'service', name: item.title[locale] })}
-                      label={item.title[locale]}
-                      className="hero-choice"
-                    />
-                  );
-                })}
-                <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={serviceUi.needOther[locale]} className="hero-choice" />
-              </div>
-            </div>
-          )}
-        </div>
+        <aside className="hero-cards" aria-label={h.heroEnquiries[locale]}>
+          <div className="hero-card">
+            <h2><MessageCircle size={16} strokeWidth={1.8} aria-hidden="true" />{h.heroEnquiries[locale]}</h2>
+            <a href={'mailto:' + business.email}><Mail size={15} aria-hidden="true" />{h.heroEmail[locale]}</a>
+            <a href={'tel:' + business.phoneTel}><Phone size={15} aria-hidden="true" />{h.heroCall[locale]}</a>
+          </div>
+        </aside>
       </div>
     </section>
     <TrustStrip locale={locale} />
@@ -385,23 +351,9 @@ export function Home({locale, projectItems = projects, serviceItems = services}:
   </>;
 }
 export function Services({ locale, items = services }: { locale: Locale; items?: readonly SiteService[] }) {
-  const c = copy.services;
   return (
     <>
-      <PageIntro tag={c.tag[locale]} title={c.title[locale]} description={c.description[locale]} />
-      <div className="section">
-        <div className="shell service-overview">
-          <ServiceChoices locale={locale} onOverview />
-          {servicePaths.map(path => (
-            <section key={path.id} id={path.id} className="service-group" tabIndex={-1}>
-              <h2>{path.title[locale]}</h2>
-              <p className="lead">{path.description[locale]}</p>
-              <ServiceGrid locale={locale} items={items.filter(service => path.services.some(slug => slug === service.slug))} />
-            </section>
-          ))}
-        </div>
-      </div>
-      <Audience locale={locale} />
+      <ServicesOverview locale={locale} items={items} />
       <CTA locale={locale} />
     </>
   );
@@ -480,11 +432,7 @@ function ConceptLinks({ locale, items }: { locale: Locale; items: readonly Proje
   );
 }
 export function Projects({locale, items = projects}: {locale:Locale; items?: readonly Project[]}) {
-  const c=copy.projects;
-  const hasWork = items.some(item => !item.sample);
-  const tag = hasWork ? (locale === 'ar' ? 'معرض المشاريع' : 'Project gallery') : c.tag[locale];
-  const description = hasWork ? (locale === 'ar' ? 'تصفّح أعمالنا والتصورات التوضيحية للحدائق.' : 'Browse our completed work and illustrative garden concepts.') : c.description[locale];
-  return <><PageIntro tag={tag} title={c.title[locale]} description={description}/><section className="section"><div className="shell"><h2 className="sr-only">{tag}</h2><p className="demo-note">{hasWork ? (locale === 'ar' ? 'الصور التي تحمل علامة «صور توضيحية» تعرض تصاميم تخيلية.' : 'Items labeled “Sample imagery” depict illustrative designs.') : c.disclaimer[locale]}</p><ProjectGrid items={items} locale={locale} filter/></div></section><CTA locale={locale}/></>;
+  return <><ProjectsOverview locale={locale} items={items} /><CTA locale={locale}/></>;
 }
 export function ProjectDetail({ locale, item, serviceItems = services, projectItems = projects }: {
   locale: Locale; item: Project; serviceItems?: readonly SiteService[]; projectItems?: readonly Project[];

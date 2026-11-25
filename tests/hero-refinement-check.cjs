@@ -46,7 +46,7 @@ async function layouts(browser, locale) {
         const heroImage = document.querySelector('.hero-photo img');
         return {
           overflow: document.documentElement.scrollWidth > innerWidth,
-          heroOverlap: overlap(rect('.hero-content'), rect('.hero-photo')),
+          heroOverlap: overlap(rect('.hero-content'), rect('.hero')),
           metaOverlap: overlap(rect('.showcase-project'), rect('.showcase-link')),
           headingsFit,
           placement: document.querySelector('.services-section').nextElementSibling.className,
@@ -57,7 +57,7 @@ async function layouts(browser, locale) {
           heroSlider: !!document.querySelector('.hero input[type=range]'),
         };
       });
-      assert.deepEqual([visual.overflow,visual.heroOverlap,visual.metaOverlap,visual.headingsFit], [false,false,false,true], locale+' '+width);
+      assert.deepEqual([visual.overflow,visual.heroOverlap,visual.metaOverlap,visual.headingsFit], [false,true,false,true], locale+' '+width);
       assert.match(visual.placement, /transformations/);
       assert.match(visual.heroSource, /\/_next\/image\?url=%2Fimages%2Fhero\.webp&w=\d+/);
       assert(visual.heroWidth > 0);

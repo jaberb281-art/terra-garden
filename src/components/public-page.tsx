@@ -84,7 +84,7 @@ export function Frame({
     <>
       <Motion />
       <a className="skip" href="#main">{ui.skip[locale]}</a>
-      <Header locale={locale} path={path} missing={missing} whatsappHref={href} />
+      <Header locale={locale} path={path} missing={missing} whatsappHref={href} overlay={!path && !missing} />
       <main id="main" tabIndex={-1}>{children}</main>
       <Footer locale={locale} whatsappHref={href} />
       <WhatsAppWidget

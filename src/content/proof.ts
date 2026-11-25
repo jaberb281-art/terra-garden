@@ -19,13 +19,24 @@ export const proofCopy = {
   title: pair('What our clients say', 'ماذا يقول عملاؤنا'),
 };
 
-/**
- * The short facts under the hero. "Hundreds of projects" comes from the owner;
- * confirm it, or replace it with an exact number, before launch.
- */
+/** Introductory highlights under the hero. Replace each image here when ready. */
 export const trustPoints = [
-  { title: pair('Hundreds of projects', 'مئات المشاريع'), detail: pair('Completed across Qatar', 'أُنجزت في أنحاء قطر') },
-  { title: pair('Free inspection', 'معاينة مجانية'), detail: pair('Before every quotation', 'قبل كل عرض سعر') },
-  { title: pair('Quotes on WhatsApp', 'عروض الأسعار عبر واتساب'), detail: pair('Send photos of your garden', 'أرسل صوراً لحديقتك') },
-  { title: pair('Villas to hotels', 'من الفلل إلى الفنادق'), detail: pair('Homes, offices, schools, hospitality', 'المنازل والمكاتب والمدارس والضيافة') },
+  {
+    title: pair('Free garden inspection', 'معاينة مجانية لحديقتك'),
+    detail: pair('A clear starting point for your quotation.', 'بداية واضحة لإعداد عرض السعر.'),
+    image: 'service-soil-fertilization',
+    alt: pair('Garden planting bed with a pebble path', 'حوض نباتات في حديقة مع ممر من الحصى'),
+  },
+  {
+    title: pair('Regular garden care', 'عناية دورية بالحديقة'),
+    detail: pair('One-time, weekly or monthly visits.', 'زيارات لمرة واحدة أو أسبوعية أو شهرية.'),
+    image: 'service-grass-cutting',
+    alt: pair('Gardener mowing a lawn between date palms', 'بستاني يقص العشب بين أشجار النخيل'),
+  },
+  {
+    title: pair('Homes & businesses', 'للمنازل والمنشآت'),
+    detail: pair('Gardening and landscaping across Qatar.', 'بستنة وتنسيق حدائق في أنحاء قطر.'),
+    image: 'villa-after',
+    alt: pair('Green lawn and planting in a villa garden', 'عشب أخضر ونباتات في حديقة فيلا'),
+  },
 ] as const;

@@ -62,7 +62,7 @@ export function ProjectGrid({items, locale, filter=false}: {items: readonly Proj
   const hasReal = items.some(project => !project.sample);
   const all = hasReal ? (locale === 'ar' ? 'كل المشاريع والتصورات' : 'All work and concepts') : ui.all[locale];
   return <>
-    {filter && <div className="filters">
+    {filter && <div className="filters mobile-fit-bar">
       <button type="button" aria-pressed={category==='all'} onClick={()=>setCategory('all')}>{all}</button>
       {categories.map(c => <button key={c.id} type="button" aria-pressed={category===c.id} onClick={()=>setCategory(c.id)}>{c.name[locale]}</button>)}
     </div>}

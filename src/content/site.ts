@@ -17,6 +17,12 @@ export const categories = [
   { id: 'commercial', name: pair('Offices & schools', 'المكاتب والمدارس'), title: pair('Offices, schools & business', 'المكاتب والمدارس والمنشآت'), copy: pair('Outdoor planting and indoor plant arrangements for offices, commercial buildings, schools and property managers.', 'زراعة خارجية وتنسيق نباتات داخلية للمكاتب والمباني التجارية والمدارس وشركات إدارة العقارات.'), image: 'patio-after', alt: pair('Outdoor seating under a pergola', 'جلسة خارجية تحت مظلة') },
   { id: 'farms', name: pair('Hospitality', 'الضيافة'), title: pair('Hotels, restaurants & spas', 'الفنادق والمطاعم والمنتجعات'), copy: pair('Well-kept grounds, palms and decorative planting for hotels, resorts, cafés, spas and hospitality developments.', 'مساحات منسقة ونخيل وزراعة زخرفية للفنادق والمنتجعات والمقاهي ومراكز العناية والمشاريع السياحية.'), image: 'farm-after', alt: pair('Landscaped path through date palms', 'ممر منسق بين أشجار النخيل') },
 ] as const;
+export const audienceMobile = {
+  title: pair('Garden care for every property.', 'عناية بالحدائق لكل عقار.'),
+  villas: pair('Garden design, lawn care and regular maintenance for residential spaces.', 'تصميم الحدائق والعناية بالعشب والصيانة الدورية للمساحات السكنية.'),
+  commercial: pair('Outdoor planting and indoor greenery for workplaces and shared spaces.', 'زراعة خارجية ونباتات داخلية لأماكن العمل والمساحات المشتركة.'),
+  farms: pair('Landscape care and decorative planting for hospitality spaces.', 'عناية بالحدائق وزراعة زخرفية لمساحات الضيافة.'),
+};
 export const ui = {
   place: pair('Qatar', 'قطر'),
   top: pair('Landscaping & gardening in Doha, Qatar', 'تنسيق الحدائق وصيانتها في الدوحة وقطر'),
@@ -50,6 +56,12 @@ export const copy = {
     title: pair('Landscaping & gardening services in Doha, Qatar', 'تنسيق الحدائق وصيانتها في الدوحة، قطر'),
     description: pair('Professional landscaping, garden design, irrigation, date palm care and garden maintenance for villas and businesses across Doha and Qatar. Free consultation.', 'تنسيق احترافي للحدائق وتصميمها والري والعناية بالنخيل وصيانة الحدائق للفلل والمنشآت في الدوحة وأنحاء قطر. استشارة مجانية.'),
     hero1: pair('Garden care and landscaping across Doha.', 'العناية بالحدائق وتنسيقها في أنحاء الدوحة.'),
+    heroTrust: pair('Trusted across Qatar', 'موثوقون في أنحاء قطر'),
+    heroInquire: pair('Request a free inspection', 'اطلب معاينة مجانية'),
+    heroLearn: pair('Explore services', 'استكشف الخدمات'),
+    heroEnquiries: pair('Speak to our team', 'تحدث مع فريقنا'),
+    heroEmail: pair('Email us', 'راسلنا بالبريد'),
+    heroCall: pair('Call us', 'اتصل بنا'),
     heroCopy: pair('Villas, compounds, offices and hotels. We inspect your garden for free and send your quote on WhatsApp.', 'للفلل والمجمعات والمكاتب والفنادق. نعاين حديقتك مجاناً ونرسل لك عرض السعر عبر واتساب.'),
     heroAlt: pair('Landscaped garden with an olive tree, date palms and lawn in front of a limestone palace', 'حديقة منسّقة فيها شجرة زيتون ونخيل ومسطح عشبي أمام قصر حجري'),
     introTag: pair('How we work', 'كيف نعمل'),

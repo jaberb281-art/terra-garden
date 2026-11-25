@@ -74,6 +74,13 @@ export function WhatsAppWidget({
       let buttonBlocked = false;
       let reminderBlocked = false;
 
+      // The mobile footer has its own full-width WhatsApp action.
+      const footer = document.querySelector('.site-footer');
+      if (window.innerWidth <= 760 && footer && footer.getBoundingClientRect().top < window.innerHeight) {
+        buttonBlocked = true;
+        reminderBlocked = true;
+      }
+
       // Preserve access to page controls when they scroll under the fixed widget.
       for (const control of document.querySelectorAll(interactive)) {
         if (widget.contains(control) || control.closest('details:not([open]) :not(summary), [hidden], [inert]')) continue;

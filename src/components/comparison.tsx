@@ -158,7 +158,7 @@ export function Featured({ items, locale }: { items: readonly Project[]; locale:
               : (ar ? 'إيقاف التبديل التلقائي' : 'Pause automatic rotation')}
           </button>
         )}
-        <div className="showcase-selectors" role="group" aria-label={ar ? 'اختر تصوراً للمقارنة' : 'Choose a project to compare'}>
+        <div className="showcase-selectors mobile-fit-bar" role="group" aria-label={ar ? 'اختر تصوراً للمقارنة' : 'Choose a project to compare'}>
           {items.map((project, position) => (
             <button
               type="button"

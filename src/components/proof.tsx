@@ -1,4 +1,5 @@
-import type { Locale } from '@/content/site';
+import Image from 'next/image';
+import { photo, type Locale } from '@/content/site';
 import { proofCopy, stats, testimonials, trustPoints } from '@/content/proof';
 import { CountUp } from './count-up';
 
@@ -35,10 +36,13 @@ export function Proof({ locale }: { locale: Locale }) {
 
 export function TrustStrip({ locale }: { locale: Locale }) {
   return (
-    <ul className="shell trust-strip">
+    <div className="trust-band"><ul className="shell trust-strip">
       {trustPoints.map(point => (
-        <li key={point.title.en}><strong>{point.title[locale]}</strong><span>{point.detail[locale]}</span></li>
+        <li key={point.title.en}>
+          <div className="trust-thumbnail"><Image src={photo(point.image)} alt={point.alt[locale]} fill sizes="(max-width: 820px) 64px, 80px" /></div>
+          <div className="trust-copy"><strong>{point.title[locale]}</strong><span>{point.detail[locale]}</span></div>
+        </li>
       ))}
-    </ul>
+    </ul></div>
   );
 }
