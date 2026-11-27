@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { brand, photo, type Locale, type Localized } from './site';
 import { projects, services } from './catalog';
 
-function verifiedOrigin(value: string | undefined) {
+export function verifiedOrigin(value: string | undefined) {
   try {
     const url = new URL(value ?? '');
     const host = url.hostname;
@@ -18,13 +18,28 @@ export const publicPaths = [
   ...services.map(s=>'/services/'+s.slug), ...projects.map(p=>'/projects/'+p.slug),
 ];
 export function languageUrls(path: string) {
+  if (!origin) return undefined;
   return { en: origin+'/en'+path, ar: origin+'/ar'+path, 'x-default': origin+'/en'+path };
 }
+
+/** Resolve local asset names, managed media paths and HTTPS social images safely. */
+export function socialImageUrl(image = 'hero') {
+  if (!origin) return undefined;
+  const source = /^[a-z0-9-]+$/i.test(image) ? photo(image) : image;
+  const local = source.startsWith('/') && !source.startsWith('//');
+  if ((!local && !source.startsWith('https://')) || source.includes('\\')) return undefined;
+  try {
+    const url = new URL(source, origin);
+    if (url.protocol !== 'https:' || url.username || url.password || (local && url.origin !== origin)) return undefined;
+    return url.href;
+  } catch { return undefined; }
+}
+
 export function metadata(locale:Locale,path:string,title:Localized,description:Localized,image='hero',alt?:Localized): Metadata {
   const fullTitle=title[locale]+' | '+brand.name;
   const url=origin ? origin+'/'+locale+path : undefined;
-  const imagePath = image.startsWith('/') ? image : photo(image);
-  const images=origin ? [{url:origin+imagePath, alt:alt?.[locale]??title[locale]}] : undefined;
+  const imageUrl = socialImageUrl(image) ?? socialImageUrl();
+  const images=imageUrl ? [{url:imageUrl, alt:alt?.[locale]??title[locale]}] : undefined;
   return {
     title:fullTitle, description:description[locale],
     robots:{index:indexable,follow:indexable},

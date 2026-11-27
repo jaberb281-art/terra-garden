@@ -1,0 +1,41 @@
+.breadcrumbs {
+  background: var(--cream);
+  color: var(--forest);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 .6rem;
+  margin-block: 0;
+  padding-block: .35rem;
+  padding-inline: 0;
+  list-style: none;
+}
+
+.breadcrumbs li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .6rem;
+  overflow-wrap: anywhere;
+}
+
+.breadcrumbs a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.breadcrumbs [aria-current] {
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--olive);
+}

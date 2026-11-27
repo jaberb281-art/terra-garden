@@ -1,13 +1,16 @@
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { About, Contact, Footer, Header, Home, ProjectDetail, Projects, ServiceDetail, Services } from '@/components/site';
-import { brand, copy, pair, ui, type Locale, type Localized } from '@/content/site';
+import { copy, pair, photo, ui, type Locale, type Localized } from '@/content/site';
 import { getPublishedProjects, getPublishedServices } from '@/lib/cms/public';
 import { projectPhoto } from '@/content/project-media';
-import { metadata, origin, publicPaths } from '@/content/config';
+import { serviceDisplay } from '@/content/service-display';
+import { metadata, publicPaths } from '@/content/config';
+import { pageBreadcrumbs, pageStructuredData, serializeStructuredData, type PageSeo } from '@/content/structured-data';
 import { inquiryLink, whatsappCopy, type Inquiry } from '@/content/whatsapp';
 import { WhatsAppWidget } from './whatsapp-widget';
 import { Motion } from './motion';
+import { Breadcrumbs } from './breadcrumbs';
 
 export type RouteParams = Promise<{segments?:string[]}>;
 export const buildParams = () => publicPaths.map(path=>({segments:path ? path.slice(1).split('/') : []}));
@@ -22,9 +25,11 @@ async function resolve(locale: Locale, segments: string[] = []) {
     const [services, projects] = await Promise.all([getPublishedServices(), getPublishedProjects()]);
     const service = services.find(item => item.slug === segments[1]);
     if (!service) notFound();
+    const art = service.art ?? { src: photo(serviceDisplay[service.slug].image), alt: serviceDisplay[service.slug].alt };
     return {
       locale, path, title: preferred(service.seo?.title, service.title), description: preferred(service.seo?.description, service.summary),
-      image: service.art?.src, alt: service.art?.alt,
+      image: art.src, alt: art.alt,
+      breadcrumbTitle: service.title, service,
       inquiry: { kind: 'service' as const, name: service.title[locale] },
       view: <ServiceDetail item={service} locale={locale} serviceItems={services} projectItems={projects} />,
     };
@@ -37,6 +42,7 @@ async function resolve(locale: Locale, segments: string[] = []) {
     return {
       locale, path, title: preferred(project.seo?.title, project.title), description: preferred(project.seo?.description, project.summary),
       image: after.src, alt: after.alt,
+      breadcrumbTitle: project.title,
       inquiry: { kind: 'project' as const, name: project.title[locale] },
       view: <ProjectDetail item={project} locale={locale} serviceItems={services} projectItems={projects} />,
     };
@@ -68,13 +74,10 @@ export async function pageMetadata(locale: Locale, { segments }: Awaited<RoutePa
   return metadata(page.locale, page.path, page.title, page.description, page.image, page.alt);
 }
 
-function StructuredData({locale}: {locale:Locale}) {
-  if(!origin) return null;
-  const value={'@context':'https://schema.org','@graph':[
-    {'@type':'WebSite','@id':origin+'/#website',name:brand.name,url:origin,inLanguage:['en','ar'],description:copy.home.description[locale]},
-    {'@type':'Organization','@id':origin+'/#organization',name:brand.name,url:origin},
-  ]};
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(value).replace(/</g,'\\u003c')}}/>;
+function StructuredData({page}: {page:PageSeo}) {
+  const value = pageStructuredData(page);
+  if (!value) return null;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{__html:serializeStructuredData(value)}}/>;
 }
 export function Frame({
   locale, path, children, missing, inquiry,
@@ -100,5 +103,5 @@ export function Frame({
 }
 export async function PublicPage({locale,segments}: {locale:Locale;segments?:string[]}) {
   const p=await resolve(locale,segments);
-  return <Frame locale={p.locale} path={p.path} inquiry={p.inquiry}>{!p.path&&<StructuredData locale={p.locale}/>}{p.view}</Frame>;
+  return <Frame locale={p.locale} path={p.path} inquiry={p.inquiry}><StructuredData page={p}/><Breadcrumbs locale={p.locale} items={pageBreadcrumbs(p)}/>{p.view}</Frame>;
 }

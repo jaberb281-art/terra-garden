@@ -30,6 +30,14 @@
   --motion: 180ms ease;
 }
 
+html {
+  scroll-padding-block-start: 112px;
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 html[lang=ar] {
   --heading: 'IBM Plex Sans Arabic', Tahoma, sans-serif;
   --body: var(--heading);
@@ -155,6 +163,15 @@ main:focus {
   z-index: 3;
   padding-block: 19px 12px;
   transition: padding var(--motion);
+}
+
+.header-row .brand {
+  min-height: var(--target);
+}
+
+.hero,
+.site-footer {
+  --focus: #e3bd87;
 }
 
 .header-row {
@@ -333,6 +350,9 @@ main:focus {
 
 .mobile-nav nav {
   inset-inline: 0;
+  max-height: calc(100dvh - 116px - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .mobile-nav nav a {
@@ -474,6 +494,10 @@ main:focus {
   font-size: clamp(3.2rem, 5.4vw, 5rem);
   line-height: 1.06;
   text-wrap: balance;
+}
+
+:lang(ar) .hero h1 {
+  line-height: 1.22;
 }
 
 .hero .actions {
@@ -844,6 +868,43 @@ main:focus {
   font-size: .75rem;
 }
 
+.compare-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-block-start: 12px;
+}
+
+.compare-actions button {
+  min-width: 72px;
+  min-height: var(--target);
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--cream);
+  color: var(--forest);
+  font-size: .85rem;
+  font-weight: 650;
+}
+
+.compare-actions button:is(:hover, [aria-pressed=true]) {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: var(--white);
+}
+
+.featured .compare-actions button {
+  border-color: #ffffff50;
+  background: transparent;
+  color: var(--white);
+}
+
+.featured .compare-actions button:is(:hover, [aria-pressed=true]) {
+  border-color: var(--leaf);
+  background: var(--leaf);
+  color: var(--forest-deep);
+}
+
 .intro,
 .supplies,
 .faq {
@@ -855,14 +916,16 @@ main:focus {
   isolation: isolate;
 }
 
-.intro::before {
-  content: '';
+.intro-backdrop {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url('/images/nursery.webp') center / cover no-repeat;
   opacity: .4;
   pointer-events: none;
+}
+
+.intro-backdrop img {
+  object-fit: cover;
 }
 
 .intro :is(.eyebrow, .lead, .text-link) {
@@ -1164,6 +1227,47 @@ main:focus {
 .svc-showcase:has(#svc-maintain:checked) .svc-card:not([data-group=maintain]),
 .svc-showcase:has(#svc-improve:checked) .svc-card:not([data-group=improve]) {
   display: none;
+}
+
+.mobile-disclosure-controls {
+  display: none;
+}
+
+.disclosure-toggle {
+  border: 1px solid var(--forest);
+  background: transparent;
+  color: var(--forest);
+}
+
+.disclosure-toggle:hover {
+  background: var(--sage);
+}
+
+.disclosure-toggle[aria-expanded=true] svg {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 760px) {
+  .svc-showcase:has(#svc-all:checked)[data-expanded=false] .svc-card:not([data-featured]),
+  .areas-disclosure[data-expanded=false] .area-tags li:nth-child(n+7) {
+    display: none;
+  }
+
+  .mobile-disclosure-controls {
+    display: grid;
+    justify-items: start;
+    gap: 12px;
+    margin-block-start: 20px;
+  }
+
+  .svc-showcase:not(:has(#svc-all:checked)) .mobile-disclosure-controls {
+    display: none;
+  }
+
+  .disclosure-status {
+    color: var(--muted);
+    font-size: .85rem;
+  }
 }
 
 .svc-grid {
@@ -2374,12 +2478,13 @@ dialog img {
 
   .header-row .brand {
     min-width: 0;
+    min-height: var(--target);
     gap: 6px;
   }
 
   .header-row .brand-icon {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
 
   .header-row .brand-icon svg {
@@ -2387,8 +2492,9 @@ dialog img {
   }
 
   .header-row .brand strong {
-    font-size: 1rem;
-    letter-spacing: .06em;
+    font-size: clamp(.85rem, 3.8vw, 1rem);
+    letter-spacing: .035em;
+    white-space: nowrap;
   }
 
   .header-row .brand>span:last-child {
@@ -2396,7 +2502,7 @@ dialog img {
   }
 
   .header-row .brand small {
-    font-size: .61rem;
+    display: none;
   }
 
   .language-short {
@@ -2563,7 +2669,11 @@ dialog img {
   }
 
   .header-row .brand strong {
-    font-size: .95rem;
+    font-size: .9rem;
+  }
+
+  .language>svg:first-child {
+    display: none;
   }
 }
 
@@ -2644,50 +2754,21 @@ dialog img {
   box-shadow: 0 10px 30px #183d2b1f;
 }
 
-/* Hero: copy rises in on load, one piece after another. */
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(var(--reveal-distance));
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
+/* Render long below-fold sections as they approach the viewport. The complete
+   content remains in HTML and keyboard/find-in-page navigation reveals it. */
+:is(.home-services, .transformations, .audience, .projects-section, .supplies, .get-started, .areas, .home-faq, .cta) {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 800px;
 }
 
-.hero-content>* {
-  animation: rise 700ms var(--ease-out) both;
-}
+.home-services { contain-intrinsic-block-size: auto 1700px; }
+.get-started { contain-intrinsic-block-size: auto 400px; }
+.areas { contain-intrinsic-block-size: auto 450px; }
+.cta { contain-intrinsic-block-size: auto 600px; }
 
-.hero-content> :nth-child(2) {
-  animation-delay: 90ms;
-}
-
-.hero-content> :nth-child(3) {
-  animation-delay: 180ms;
-}
-
-.hero-note {
-  animation: rise 800ms 240ms var(--ease-out) both;
-}
-
-.hero-cards {
-  animation: rise 900ms 300ms var(--ease-out) both;
-}
-
-/* Scroll reveal: only applies after the script marks an element as waiting. */
-[data-reveal='wait'] {
-  opacity: 0;
-  transform: translateY(var(--reveal-distance));
-}
-
-[data-reveal='in'] {
-  opacity: 1;
-  transform: none;
-  transition: opacity 650ms var(--ease-out), transform 650ms var(--ease-out);
-  transition-delay: calc(var(--i, 0) * 90ms);
+@media (max-width: 760px) {
+  .home-services { contain-intrinsic-block-size: auto 2100px; }
+  :is(.audience, .projects-section) { contain-intrinsic-block-size: auto 1700px; }
 }
 
 /* Cards lift on hover. */
@@ -2738,21 +2819,6 @@ dialog img {
 
 .text-link:hover {
   gap: 12px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-  .hero-content>*,
-  .hero-note,
-  .hero-cards {
-    animation: none;
-  }
-
-  [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
 }
 
 /* ---------- Proof ---------- */
@@ -2874,9 +2940,21 @@ dialog img {
 }
 
 .contact-lines a {
+  display: inline-flex;
+  min-height: var(--target);
+  align-items: center;
   min-width: 0;
   overflow-wrap: anywhere;
   color: inherit;
+  text-underline-offset: 4px;
+}
+
+.form-result a {
+  display: inline-flex;
+  min-height: var(--target);
+  align-items: center;
+  color: var(--forest);
+  text-decoration: underline;
   text-underline-offset: 4px;
 }
 

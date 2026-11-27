@@ -6,7 +6,8 @@ import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
 import '@fontsource/ibm-plex-sans-arabic/arabic-700.css';
 import '@/app/globals.css';
 import type { Locale } from '@/content/site';
+import { ConversionEvents } from './conversion-events';
 
 export function LocaleLayout({children,locale}: {children:ReactNode;locale:Locale}) {
-  return <html lang={locale} dir={locale==='ar'?'rtl':'ltr'}><body>{children}</body></html>;
+  return <html lang={locale} dir={locale==='ar'?'rtl':'ltr'}><body>{children}{process.env.NEXT_PUBLIC_CONVERSION_EVENTS_ENABLED === 'true' && <ConversionEvents />}</body></html>;
 }

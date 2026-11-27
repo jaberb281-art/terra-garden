@@ -49,7 +49,7 @@ export function ServicesOverview({ locale, items }: { locale: Locale; items: rea
         <p className={styles.heroIntro}>{text.intro[locale]}</p>
         <div className={styles.heroActions}>
           <a href="#service-directory" className={'button ' + styles.explore}>{text.explore[locale]}<ArrowDown size={17} aria-hidden="true" /></a>
-          <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={text.inspection[locale]} className={'button ' + styles.inspection} />
+          <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={text.inspection[locale]} className={'button ' + styles.inspection} conversion="free_inspection_request" />
         </div>
       </div>
     </section>

@@ -8,6 +8,7 @@ import { services, type Project, type SiteService } from '@/content/catalog';
 import { projectPhoto } from '@/content/project-media';
 import { MediaImage } from './media-image';
 import { createWhatsAppLink } from '@/content/whatsapp';
+import { trackConversion } from '@/lib/conversion-events';
 
 export function MobileNav({ locale, path }: { locale: Locale; path: string }) {
   const ref = useRef<HTMLDetailsElement>(null);
@@ -20,9 +21,20 @@ export function MobileNav({ locale, path }: { locale: Locale; path: string }) {
       const details = ref.current;
       if (details && event.target instanceof Node && !details.contains(event.target)) details.open = false;
     };
+    const closeDesktop = () => {
+      if (window.matchMedia('(min-width: 1081px)').matches && ref.current) ref.current.open = false;
+    };
     document.addEventListener('pointerdown', closeOutside);
-    return () => document.removeEventListener('pointerdown', closeOutside);
+    window.addEventListener('resize', closeDesktop);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      window.removeEventListener('resize', closeDesktop);
+    };
   }, [open]);
+
+  useEffect(() => {
+    if (ref.current) ref.current.open = false;
+  }, [path, locale]);
 
   return (
     <details
@@ -33,12 +45,24 @@ export function MobileNav({ locale, path }: { locale: Locale; path: string }) {
         if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
       }}
       onKeyDown={event => {
+        if (event.target === event.currentTarget.querySelector('summary') && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
+          event.preventDefault();
+          event.currentTarget.open = true;
+          const links = event.currentTarget.querySelectorAll('nav a');
+          const target = links[event.key === 'ArrowUp' ? links.length - 1 : 0] as HTMLAnchorElement | undefined;
+          target?.focus();
+          return;
+        }
         if (event.key !== 'Escape' || !event.currentTarget.open) return;
+        event.preventDefault();
+        event.stopPropagation();
         event.currentTarget.open = false;
         event.currentTarget.querySelector('summary')?.focus();
       }}
     >
-      <summary aria-controls={id} aria-label={ui.openMenu[locale]}><Menu size={21} aria-hidden="true" /></summary>
+      <summary aria-controls={id} aria-expanded={open} aria-label={open ? (locale === 'ar' ? 'أغلق القائمة' : 'Close menu') : ui.openMenu[locale]}>
+        {open ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
+      </summary>
       <nav id={id} aria-label={ui.mainNav[locale]}>
         {navigation.map(entry => (
           <Link
@@ -71,7 +95,7 @@ export function ProjectGrid({items, locale, filter=false}: {items: readonly Proj
       {shown.map(p => <article className="project-card" key={p.slug}>
         <Link href={'/'+locale+'/projects/'+p.slug}>
           <div className="card-photo"><MediaImage src={projectPhoto(p, 'after').src} alt={p.afterAlt[locale]} fill sizes="(max-width: 620px) 94vw, (max-width: 950px) 46vw, 390px"/>{p.sample && <span className="photo-tag">{ui.sample[locale]}</span>}</div>
-          <div className="project-body"><div><p className="eyebrow">{categories.find(c=>c.id===p.category)?.name[locale]}</p><h3>{p.title[locale]}</h3><p>{p.summary[locale]}</p></div><ArrowUpRight size={21} aria-hidden="true"/></div>
+          <div className="project-body"><div><p className="eyebrow">{categories.find(c=>c.id===p.category)?.name[locale]}</p><h3>{p.title[locale]}</h3><p>{p.summary[locale]}</p></div><ArrowUpRight className="direction" size={21} aria-hidden="true"/></div>
         </Link>
       </article>)}
     </div> : <p>{ui.empty[locale]}</p>}
@@ -109,6 +133,7 @@ const subscribeToHydration = () => () => {};
 export function QuoteForm({locale, serviceItems = services, whatsappNumber}: {locale: Locale; serviceItems?: readonly SiteService[]; whatsappNumber?: string}) {
   const [errors,setErrors] = useState<Errors>({});
   const [sent,setSent] = useState<'idle'|'opened'|'unavailable'>('idle');
+  const [preparedLink,setPreparedLink] = useState<string>();
   const hydrated=useSyncExternalStore(subscribeToHydration,()=>true,()=>false);
   const ar=locale==='ar';
   const label=(field:Field)=>fields[field][ar?1:0];
@@ -124,7 +149,7 @@ export function QuoteForm({locale, serviceItems = services, whatsappNumber}: {lo
     if(digits && (!/^\+?[\d\s().-]+$/.test(digits) || !/^\d{8,15}$/.test(digits.replace(/\D/g,'')))) next.phone=ar?'أدخل رقم هاتف صالحاً من ٨ إلى ١٥ رقماً.':'Enter a valid phone number with 8 to 15 digits.';
     setErrors(next);
     const first=Object.keys(next)[0];
-    if(first) { setSent('idle'); (form.elements.namedItem(first) as HTMLElement|null)?.focus(); return; }
+    if(first) { setSent('idle'); setPreparedLink(undefined); (form.elements.namedItem(first) as HTMLElement|null)?.focus(); return; }
     const pick=(field:'property'|'service')=>{
       const v=value(field);
       if(!v) return '';
@@ -144,13 +169,15 @@ export function QuoteForm({locale, serviceItems = services, whatsappNumber}: {lo
       [label('phone').replace(/ \(.*\)$/,''),value('phone')],
     ].map(l=>typeof l==='string'?l:(l[1]?l[0]+': '+l[1]:'')).filter(Boolean);
     const link=createWhatsAppLink(whatsappNumber,lines.join('\n'));
-    if(!link) { setSent('unavailable'); return; }
+    if(!link) { setPreparedLink(undefined); setSent('unavailable'); return; }
+    setPreparedLink(link);
     window.open(link,'_blank','noopener,noreferrer');
+    trackConversion(value('service') ? 'service_quote_request' : 'free_inspection_request', 'quote_form');
     setSent('opened');
   };
   const attributes=(field:Field)=>({id:'quote-'+field,name:field,required:requiredFields.includes(field),'aria-invalid':!!errors[field],'aria-describedby':errors[field]?'error-'+field:undefined});
   const error=(field:Field)=>errors[field]&&<span className="field-error" id={'error-'+field} role="alert">{errors[field]}</span>;
-  return <form className="quote-form" method="post" noValidate onSubmit={submit} onChange={()=>{if(sent!=='idle')setSent('idle');}}>
+  return <form className="quote-form" method="post" noValidate onSubmit={submit} onChange={()=>{if(sent!=='idle'){setSent('idle');setPreparedLink(undefined);}}}>
     <fieldset disabled={!hydrated}><div className="form-grid">
       <label htmlFor="quote-name">{label('name')}<input {...attributes('name')} autoComplete="name" maxLength={120}/>{error('name')}</label>
       <label htmlFor="quote-phone">{label('phone')}<input {...attributes('phone')} type="tel" autoComplete="tel" maxLength={28} dir="ltr"/>{error('phone')}</label>
@@ -164,7 +191,10 @@ export function QuoteForm({locale, serviceItems = services, whatsappNumber}: {lo
     <button className="button primary" type="submit">{ar?'أرسل عبر واتساب':'Send on WhatsApp'}</button></fieldset>
     <noscript><p className="form-note">{ar?'فعّل جافاسكربت لإرسال الطلب.':'Enable JavaScript to send your request.'}</p></noscript>
     <p className="form-note">{ar?'سيفتح واتساب برسالة جاهزة يمكنك مراجعتها قبل الإرسال.':'WhatsApp opens with your message ready. Review it, then press send.'}</p>
-    {sent==='opened' && <p className="form-result" role="status">{ar?'فتحنا واتساب برسالتك. اضغط إرسال هناك لإكمال الطلب.':'WhatsApp is open with your message. Press send there to complete your request.'}</p>}
+    {sent==='opened' && <div className="form-result" role="status">
+      <p>{ar?'رسالتك جاهزة. راجعها واضغط إرسال في واتساب لإكمال الطلب.':'Your message is ready. Review it and press send in WhatsApp to complete your request.'}</p>
+      <a href={preparedLink} target="_blank" rel="noopener noreferrer">{ar?'إذا لم يفتح واتساب، افتح الرسالة الجاهزة':'If WhatsApp did not open, open your prepared message'}</a>
+    </div>}
     {sent==='unavailable' && <p className="form-result" role="alert">{ar?'واتساب غير متاح حالياً. يرجى المحاولة لاحقاً.':'WhatsApp isn’t available right now. Please try again later.'}</p>}
   </form>;
 }

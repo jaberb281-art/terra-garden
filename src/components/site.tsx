@@ -17,6 +17,7 @@ import { Proof, TrustStrip } from './proof';
 import { ServicesOverview } from './services-overview';
 import { ProjectsOverview } from './projects-overview';
 import { SocialPlaceholders } from './social-placeholders';
+import { MobileDisclosure } from './mobile-disclosure';
 
 const local = (locale: Locale, path = '') => '/'+locale+path;
 // Repeat the first photo at the end so the track can loop without a jump.
@@ -73,7 +74,7 @@ function CTA({ locale, inquiry }: { locale: Locale; inquiry?: Inquiry }) {
         <h2>{ui.contactTitle[locale]}</h2>
         <p className="cta-description">{ui.contactCopy[locale]}</p>
         <div className="cta-actions">
-          <WhatsAppAction locale={locale} href={inquiryLink(locale, inquiry)} label={label} className="button primary cta-whatsapp" />
+          <WhatsAppAction locale={locale} href={inquiryLink(locale, inquiry)} label={label} className="button primary cta-whatsapp" conversion={inquiry?.kind === 'service' ? 'service_quote_request' : inquiry?.kind === 'project' ? 'project_enquiry' : 'free_inspection_request'} />
           <Link className="cta-projects" href={local(locale, '/projects')}>
             {locale === 'ar' ? 'شاهد المشاريع' : 'View projects'}
           </Link>
@@ -85,8 +86,8 @@ function CTA({ locale, inquiry }: { locale: Locale; inquiry?: Inquiry }) {
 export function PageIntro({tag,title,description,children, image, className}: {tag:string;title:string;description:string;children?:ReactNode;image?:{src:string;alt:string;label:string};className?:string}) {
   return <div className={className ? "page-intro " + className : "page-intro"}><div className={image ? "shell page-intro-split" : "shell"}><div>{children}<p className="eyebrow">{tag}</p><h1>{title}</h1><p className="lead">{description}</p></div>{image && <div className="page-intro-image"><Image src={image.src} alt={image.alt} fill sizes="(max-width: 760px) 90vw, 500px"/><span className="photo-tag">{image.label}</span></div>}</div></div>;
 }
-function SectionHead({tag,title,description,children}: {tag:string;title:ReactNode;description?:string;children?:ReactNode}) {
-  return <div className="section-head"><div><p className="eyebrow">{tag}</p><h2>{title}</h2>{description&&<p className="lead">{description}</p>}</div>{children}</div>;
+function SectionHead({tag,title,description,children,id}: {tag:string;title:ReactNode;description?:string;children?:ReactNode;id?:string}) {
+  return <div className="section-head"><div><p className="eyebrow">{tag}</p><h2 id={id}>{title}</h2>{description&&<p className="lead">{description}</p>}</div>{children}</div>;
 }
 function TextLink({href,children}: {href:string;children:ReactNode}) {
   return <Link className="text-link" href={href}>{children} <ArrowRight className="direction" size={16} aria-hidden="true"/></Link>;
@@ -125,13 +126,14 @@ function ServiceCard({ locale, service, featured = false }: { locale: Locale; se
   );
 }
 
-function ServiceGrid({ locale, items = services, featured = false }: {
+function ServiceGrid({ locale, items = services, featured = false, id }: {
   locale: Locale;
   items?: readonly SiteService[];
   featured?: boolean;
+  id?: string;
 }) {
   return (
-    <div className="svc-grid">
+    <div className="svc-grid" id={id}>
       {items.map(service => (
         <ServiceCard key={service.slug} locale={locale} service={service} featured={featured && isFeatured(service.slug)} />
       ))}
@@ -139,12 +141,16 @@ function ServiceGrid({ locale, items = services, featured = false }: {
   );
 }
 
-// Home page services: filter tabs (CSS-only radios, no JavaScript) above a grid
-// where the flagship services are featured.
+// Native radio filters retain all service links in the server-rendered page.
 function ServiceShowcase({ locale, items }: { locale: Locale; items: readonly SiteService[] }) {
   const ordered = [...items].sort((a, b) => serviceDisplay[a.slug].order - serviceDisplay[b.slug].order);
+  const featuredCount = ordered.filter(service => isFeatured(service.slug)).length;
   return (
-    <div className="svc-showcase">
+    <MobileDisclosure className="svc-showcase" controls="home-services-grid"
+      showLabel={locale === 'ar' ? `عرض كل الخدمات (${ordered.length})` : `Show all ${ordered.length} services`}
+      hideLabel={locale === 'ar' ? 'عرض الخدمات المميزة فقط' : 'Show featured services'}
+      previewLabel={locale === 'ar' ? `${featuredCount} خدمات مميزة · ${ordered.length} خدمات متاحة` : `${featuredCount} featured services · ${ordered.length} available`}
+      expandedLabel={locale === 'ar' ? `عرض كل الخدمات (${ordered.length})` : `Showing all ${ordered.length} services`}>
       <div className="svc-tabs mobile-fit-bar" role="radiogroup" aria-label={serviceUi.filter[locale]}>
         <input className="sr-only" type="radio" name="svc-group" id="svc-all" defaultChecked />
         <label htmlFor="svc-all">{serviceUi.all[locale]}</label>
@@ -155,8 +161,8 @@ function ServiceShowcase({ locale, items }: { locale: Locale; items: readonly Si
           </Fragment>
         ))}
       </div>
-      <ServiceGrid locale={locale} items={ordered} featured />
-    </div>
+      <ServiceGrid locale={locale} items={ordered} featured id="home-services-grid" />
+    </MobileDisclosure>
   );
 }
 function Audience({ locale }: { locale: Locale }) {
@@ -178,7 +184,7 @@ function Audience({ locale }: { locale: Locale }) {
                   <h3>{category.title[locale]}</h3>
                   <p className="audience-desktop">{category.copy[locale]}</p>
                   <p className="audience-mobile">{audienceMobile[category.id][locale]}</p>
-                  <span className="audience-concept">{(project ? journey.concept : copy.home.allProjects)[locale]}<ArrowUpRight size={18} aria-hidden="true" /></span>
+                    <span className="audience-concept">{(project ? journey.concept : copy.home.allProjects)[locale]}<ArrowUpRight className="direction" size={18} aria-hidden="true" /></span>
                 </div>
               </Link>
             );
@@ -198,8 +204,12 @@ function Areas({ locale }: { locale: Locale }) {
   return (
     <section className="section areas" aria-labelledby="areas-heading">
       <div className="shell">
-        <SectionHead tag={areasCopy.tag[locale]} title={areasCopy.title[locale]} />
-        <ul className="area-tags">{areas.map(area => <li key={area.en}><MapPin size={15} aria-hidden="true" />{area[locale]}</li>)}</ul>
+        <SectionHead id="areas-heading" tag={areasCopy.tag[locale]} title={areasCopy.title[locale]} />
+        <MobileDisclosure className="areas-disclosure" controls="service-areas-list"
+          showLabel={locale === 'ar' ? `عرض كل المناطق (${areas.length})` : `Show all ${areas.length} areas`}
+          hideLabel={locale === 'ar' ? 'عرض المناطق الرئيسية' : 'Show major areas'}>
+          <ul className="area-tags" id="service-areas-list">{areas.map(area => <li key={area.en}><MapPin size={15} aria-hidden="true" />{area[locale]}</li>)}</ul>
+        </MobileDisclosure>
         <p className="area-note">{areasCopy.note[locale]}</p>
       </div>
     </section>
@@ -284,7 +294,8 @@ export function Home({locale, projectItems = projects, serviceItems = services}:
           alt={h.heroAlt[locale]}
           fill
           sizes="100vw"
-          preload
+          loading="eager"
+          fetchPriority="high"
         />
       </figure>
       <div className="hero-shade" aria-hidden="true" />
@@ -294,7 +305,7 @@ export function Home({locale, projectItems = projects, serviceItems = services}:
           <h1 id="home-hero-title">{h.hero1[locale]}</h1>
           <p className="hero-note">{h.heroCopy[locale]}</p>
           <div className="actions">
-            <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={h.heroInquire[locale]} className="button hero-inquiry" />
+            <WhatsAppAction locale={locale} href={inquiryLink(locale)} label={h.heroInquire[locale]} className="button hero-inquiry" conversion="free_inspection_request" />
             <Link className="button hero-more" href={local(locale, '/services')}>{h.heroLearn[locale]}<ArrowRight className="direction" size={17} aria-hidden="true" /></Link>
           </div>
         </div>
@@ -309,6 +320,7 @@ export function Home({locale, projectItems = projects, serviceItems = services}:
     </section>
     <TrustStrip locale={locale} />
     <section className="intro section">
+      <div className="intro-backdrop" aria-hidden="true"><Image src={photo('nursery')} alt="" fill sizes="100vw" /></div>
       <div className="shell intro-grid">
         <div className="intro-card">
           <p className="eyebrow">{h.introTag[locale]}</p>

@@ -1,4 +1,5 @@
 .hero {
+  --focus: #e3bd87;
   position: relative;
   isolation: isolate;
   display: flex;
@@ -16,6 +17,7 @@
 .hero .kicker { color: var(--leaf); }
 :global([lang=ar]) .kicker { letter-spacing: 0; }
 .heroContent h1 { max-width: 16ch; color: white; font-size: clamp(2.65rem, 5.6vw, 5rem); line-height: 1.08; }
+:global(html[lang=ar]) .heroContent h1 { line-height: 1.22; }
 .heroIntro { max-width: 52ch; margin-block-start: 24px; color: #eef2e8; font-size: 1.05rem; line-height: 1.7; }
 .heroActions { display: flex; flex-wrap: wrap; gap: 12px; margin-block-start: 30px; }
 .explore { background: var(--lime); color: var(--forest-deep); border-radius: var(--radius-pill); }
@@ -29,7 +31,7 @@
 .principles svg { color: var(--leaf); margin-block-end: 34px; }
 .principles h3 { color: white; font-size: 1.35rem; line-height: 1.3; }
 .principles p { margin-block-start: 16px; font-size: .98rem; line-height: 1.7; }
-.gallery { background: var(--cream); scroll-margin-block-start: 110px; }
+.gallery { background: var(--cream); scroll-margin-block-start: 12px; }
 .provenance { max-width: 78ch; color: var(--muted); font-size: .9rem; line-height: 1.7; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 26px 36px; }
 .filters button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 18px; border: 1px solid #b6bfa9; border-radius: var(--radius-pill); color: var(--forest); font-size: .88rem; font-weight: 650; line-height: 1.4; transition: background var(--motion), color var(--motion); }

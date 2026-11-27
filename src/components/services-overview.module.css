@@ -1,9 +1,11 @@
 .page { --service-gap: clamp(24px, 4vw, 64px); }
+.hero { --focus: #e3bd87; }
 .hero { position: relative; isolation: isolate; display: flex; align-items: center; min-height: 540px; padding-block: 72px; background: var(--forest-deep); color: white; overflow: hidden; }
 .heroImage { object-fit: cover; object-position: center 58%; z-index: -2; }
 .shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #102c20ef 0%, #102c20b8 48%, #102c2040 100%); }
 :global([dir=rtl]) .shade { transform: scaleX(-1); }
 .heroContent h1 { max-width: 13ch; font-size: clamp(2.65rem, 5.6vw, 5rem); color: white; line-height: 1.08; }
+:global(html[lang=ar]) .heroContent h1 { line-height: 1.22; }
 .kicker { margin-block-end: 16px; color: var(--leaf-deep); font-size: .8rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .hero .kicker { color: var(--leaf); }
 :global([lang=ar]) .kicker { letter-spacing: 0; }
@@ -24,11 +26,11 @@
 .benefitIcon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; flex: none; background: var(--forest); color: var(--lime); }
 .benefits h3 { font-size: 1.03rem; }
 .benefits p { margin-block-start: 5px; color: var(--muted); font-size: .92rem; }
-.directory { background: var(--cream); scroll-margin-block-start: 120px; }
+.directory { background: var(--cream); scroll-margin-block-start: 12px; }
 .jumpLinks { display: flex; flex-wrap: wrap; gap: 10px; margin-block-end: 48px; }
 .jumpLinks a { display: flex; min-height: 46px; align-items: center; gap: 14px; padding: 10px 18px; border: 1px solid #b6bfa9; border-radius: var(--radius-pill); color: var(--forest); font-size: .9rem; font-weight: 650; }
 .jumpLinks a:hover { background: var(--sage); }
-.group { scroll-margin-block-start: 120px; }
+.group { scroll-margin-block-start: 12px; }
 .group + .group { margin-block-start: 64px; }
 .groupHeading { display: flex; gap: 20px; align-items: baseline; padding-block: 0 25px; border-block-end: 1px solid #cdd3c4; margin-block-end: 26px; }
 .groupHeading > span { color: var(--olive); font-size: .85rem; font-weight: 650; }

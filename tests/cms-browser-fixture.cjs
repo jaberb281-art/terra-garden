@@ -8,6 +8,9 @@ const { chromium } = require('../.qa/node_modules/playwright-core');
 const base = 'http://127.0.0.1:3101';
 const supabase = 'http://127.0.0.1:54419';
 const output = 'test-results/admin-cms';
+// Isolate Next's persistent fetch cache between disposable fixture runs.
+const fixtureKey = 'sb_publishable_browser_fixture_' + randomUUID().replaceAll('-', '');
+const fixtureSlug = 'fixture-garden-' + randomUUID().slice(0, 8);
 const owner = { id: '30000000-0000-4000-8000-000000000001', email: 'owner@example.invalid', role: 'authenticated', aud: 'authenticated' };
 const visitor = { ...owner, id: '30000000-0000-4000-8000-000000000002', email: 'visitor@example.invalid' };
 const pair = (en, ar) => ({ en, ar });
@@ -166,7 +169,7 @@ async function run() {
   await new Promise((resolve, reject) => backend.listen(54419, '127.0.0.1', resolve).once('error', reject));
   const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '3101'], {
     stdio: 'inherit',
-    env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: supabase, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_browser_fixture',
+    env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: supabase, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: fixtureKey,
       CLOUDINARY_CLOUD_NAME: 'terra-test-fixture', CLOUDINARY_API_KEY: 'fixture', CLOUDINARY_API_SECRET: 'fixture', SITE_ALLOW_INDEXING: 'false' },
   });
   let browser;
@@ -192,7 +195,7 @@ async function run() {
     await page.screenshot({ path: output + '/fixture-overview-desktop.png', fullPage: true });
     await page.getByRole('link', { name: 'Create a project' }).click();
     await page.waitForURL('**/admin/projects/new');
-    await page.locator('[name=slug]').fill('fixture-garden');
+    await page.locator('[name=slug]').fill(fixtureSlug);
     await page.locator('[name=title_en]').fill('Garden fixture');
     await page.locator('[name=title_ar]').fill('حديقة اختبارية');
     for (const field of ['description', 'challenge', 'approach', 'outcome']) {
@@ -204,7 +207,7 @@ async function run() {
     await page.waitForURL('**/edit?notice=created');
     const project = projects[0];
     assert.equal(project.status, 'draft');
-    assert.equal((await fetch(base + '/en/projects/fixture-garden')).status, 404);
+    assert.equal((await fetch(base + '/en/projects/' + fixtureSlug)).status, 404);
 
     await page.getByRole('button', { name: 'Publish project' }).click();
     await page.getByRole('alert').filter({ hasText: 'Upload both' }).waitFor();
@@ -267,23 +270,23 @@ async function run() {
     await page.waitForURL('**/edit?notice=published');
     assert.equal(project.status, 'published');
     for (const [locale, title] of [['en', 'Garden fixture'], ['ar', 'حديقة اختبارية']]) {
-      await page.goto(base + '/' + locale + '/projects/fixture-garden');
+      await page.goto(base + '/' + locale + '/projects/' + fixtureSlug);
       assert.equal(await page.locator('h1').textContent(), title);
-      assert.equal(await page.title(), (locale === 'ar' ? 'عنوان اختبار للبحث' : 'Fixture search title') + ' | TERRA');
+      assert.equal(await page.title(), (locale === 'ar' ? 'عنوان اختبار للبحث' : 'Fixture search title') + ' | AB Gardening');
       assert.equal(await page.locator('.gallery>button').count(), 4);
       assert.match(await page.locator('meta[name=robots]').getAttribute('content'), /noindex/);
       await page.goto(base + '/' + locale + '/projects');
-      assert(await page.locator('a[href="/' + locale + '/projects/fixture-garden"]').isVisible());
+      assert(await page.locator('a[href="/' + locale + '/projects/' + fixtureSlug + '"]').first().isVisible());
     }
     await page.goto(base + '/en');
-    assert(await page.locator('.projects-section a[href="/en/projects/fixture-garden"]').isVisible());
+    assert(await page.locator('.projects-section a[href="/en/projects/' + fixtureSlug + '"]').isVisible());
 
     await page.setViewportSize({ width: 390, height: 860 });
     await page.goto(base + '/admin/projects?q=fixture&status=published');
     await page.getByRole('heading', { name: 'Garden fixture' }).waitFor();
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: output + '/fixture-projects-mobile.png', fullPage: true });
-    await page.goto(base + '/admin/services');
+    await page.goto(base + '/admin/services?service=grass-cutting');
     await page.locator('[name=summary_en]').fill('Updated fixture service summary');
     await page.getByRole('button', { name: 'Save service' }).click();
     await page.waitForURL('**/admin/services?service=grass-cutting&notice=saved');
@@ -294,7 +297,7 @@ async function run() {
     await page.goto(base + '/admin/projects/' + project.id + '/edit');
     await page.getByRole('button', { name: 'Unpublish project' }).click();
     await page.waitForURL('**/edit?notice=unpublished');
-    assert.equal((await fetch(base + '/ar/projects/fixture-garden')).status, 404);
+    assert.equal((await fetch(base + '/ar/projects/' + fixtureSlug)).status, 404);
     assert.equal((await fetch(base + '/media/project-images/' + images[0].id)).status, 404);
     await page.getByText('Delete draft', { exact: true }).click();
     await page.getByRole('checkbox', { name: /Delete this draft/ }).check();

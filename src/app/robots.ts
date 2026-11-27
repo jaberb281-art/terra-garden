@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { indexable, origin } from '@/content/config';
 export default function robots(): MetadataRoute.Robots {
-  return indexable ? {rules:{userAgent:'*',allow:'/',disallow:'/admin'},sitemap:origin+'/sitemap.xml'} : {rules:{userAgent:'*',disallow:'/'}};
+  return indexable && origin
+    ? { rules: { userAgent: '*', allow: '/', disallow: '/admin' }, sitemap: origin + '/sitemap.xml' }
+    : { rules: { userAgent: '*', disallow: '/' } };
 }

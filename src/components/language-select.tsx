@@ -7,6 +7,14 @@ import { locales, type Locale } from '@/content/site';
 
 const names = { en: 'English', ar: 'العربية' };
 
+function rememberLanguage(locale: Locale) {
+  try {
+    document.cookie = `ab-gardening-locale=${locale}; Path=/; Max-Age=31536000; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+  } catch {
+    // Switching remains available when browser storage is restricted.
+  }
+}
+
 export function LanguageSelect({ locale, path }: { locale: Locale; path: string }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -82,7 +90,10 @@ export function LanguageSelect({ locale, path }: { locale: Locale; path: string 
               href={'/' + language + path}
               hrefLang={language}
               aria-current={locale === language ? 'true' : undefined}
-              onClick={closeAndFocus}
+              onClick={() => {
+                rememberLanguage(language);
+                closeAndFocus();
+              }}
             >
               <span lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'}>{names[language]}</span>
               {locale === language && <Check size={16} aria-hidden="true" />}
